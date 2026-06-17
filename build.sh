@@ -24,11 +24,13 @@ fi
 
 # 2. js/config.js 파일의 키를 실제 값으로 치환 (원본 보호를 위해 백업 후 작업)
 cp js/config.js js/config.js.bak
+cp lunch.html lunch.html.bak
 
 # js/config.js에 있는 한글 텍스트를 실제 입력받은 키로 치환합니다.
 sed -i "s|선생님의_나이스_API_키|${NEIS_API_KEY}|g" js/config.js
 sed -i "s|선생님의_다했니_API_키|${DAHANDIN_API_KEY}|g" js/config.js
 sed -i "s|선생님의_기상청_API_키|${WEATHER_KEY}|g" js/config.js
+sed -i "s|선생님의_나이스_API_키|${NEIS_API_KEY}|g" lunch.html
 
 echo "✅ [Step 2] API 키 치환 완료! 배포를 시작합니다."
 
@@ -43,6 +45,7 @@ fi
 
 # 4. 설정 복구 (배포가 끝난 후 원본 파일로 되돌립니다)
 mv js/config.js.bak js/config.js
+mv lunch.html.bak lunch.html
 
 # 보안 설정 원복
 unset NODE_TLS_REJECT_UNAUTHORIZED

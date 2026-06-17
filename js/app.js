@@ -1,9 +1,13 @@
 const NEIS_API_KEY = CLASS_CONFIG.neisApiKey;
 const DAHANDIN_API_KEY = CLASS_CONFIG.dahandinApiKey;
 const WEATHER_KEY = CLASS_CONFIG.weatherKey;
-const { studentData, subjects, subIcons, defaultMarqueeMsg, school, weatherGrid, alarmSoundUrl } = CLASS_CONFIG;
+
+// 개인 정보 보호를 위해 studentData는 localStorage에서 먼저 로드합니다.
+// localStorage에 없으면 CLASS_CONFIG.studentData (이제 빈 배열)를 사용합니다.
+CLASS_CONFIG.studentData = JSON.parse(localStorage.getItem('studentData_v1')) || CLASS_CONFIG.studentData;
+const { studentData, subjects, subIcons, defaultMarqueeMsg, school, weatherGrid, alarmSoundUrl } = CLASS_CONFIG; // 이제 studentData는 로드된 값 또는 빈 배열
 const { bugPool, wheelItems } = CLASS_DATA;
-const STUDENT_COUNT = studentData.length;
+const STUDENT_COUNT = studentData.length; // studentData가 로드된 후 길이를 계산
 
 let viewDate = new Date();
         let weeklyTT = JSON.parse(localStorage.getItem('weeklyTT_v7')) || { "월": Array(6).fill().map(()=>({s:"-", m:false})), "화": Array(6).fill().map(()=>({s:"-", m:false})), "수": Array(6).fill().map(()=>({s:"-", m:false})), "목": Array(6).fill().map(()=>({s:"-", m:false})), "금": Array(6).fill().map(()=>({s:"-", m:false})) };
@@ -660,7 +664,7 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
                     const menu = rawMenu.replace(/[0-9. *()]/g, '').split('<br/>').filter(i => i.trim());
                     mealList.innerHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; text-align:left; padding:10px; font-size:1.6rem;">${menu.map(i => `<div>${getMealIcon(i)} ${i}</div>`).join('')}</div>`;
                 } else { mealList.innerHTML = "<div style='padding-top:20px;'>🍱 오늘은 급식 정보가 없어요</div>"; }
-            } catch(e) { mealList.innerText = "급식 서버 연결 실패"; }
+            } catch(e) { console.error("급식 데이터 로드 실패:", e); mealList.innerText = "급식 서버 연결 실패"; }
         }
 
         async function fetchWeather() {
@@ -1116,6 +1120,30 @@ card.innerHTML = `
             closeAllModals();
             renderAll();
         }
+
+// ✨ 학생 데이터 불러오기 기능 추가
+function importStudentData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedStudents = JSON.parse(e.target.result);
+            // 데이터 유효성 검사 (name과 code 필드 확인)
+            if (!Array.isArray(importedStudents) || !importedStudents.every(s => s.name && s.code)) {
+                alert("학생 데이터 파일 형식이 올바르지 않습니다. 각 항목은 'name'과 'code'를 포함해야 합니다.");
+                return;
+            }
+            localStorage.setItem('studentData_v1', JSON.stringify(importedStudents));
+            alert("학생 데이터가 성공적으로 불러와졌습니다! 페이지를 새로고침합니다.");
+            location.reload();
+        } catch(err) {
+            alert("파일을 읽는 중 오류가 발생했습니다. JSON 형식이 올바른지 확인하세요.");
+            console.error("학생 데이터 불러오기 오류:", err);
+        }
+    };
+    reader.readAsText(file);
+}
 
 // ✨ 진정한 무작위 비행 (AI 알고리즘)
         setInterval(() => {
