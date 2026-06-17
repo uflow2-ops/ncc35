@@ -17,15 +17,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Verify Files
+        run: |
+          echo "Checking if required files exist..."
+          ls -l js/config.js
+          ls -l lunch.html
+
       - name: Inject API Keys
         run: |
-          # config.js의 플레이스홀더를 실제 시크릿 값으로 안전하게 치환
+          echo "Injecting API Keys into config.js and lunch.html..."
           sed -i "s|선생님의_나이스_API_키|${{ secrets.NEIS_API_KEY }}|g" js/config.js
           sed -i "s|선생님의_다했니_API_키|${{ secrets.DAHANDIN_API_KEY }}|g" js/config.js
           sed -i "s|선생님의_기상청_API_키|${{ secrets.WEATHER_KEY }}|g" js/config.js
-          
-          # lunch.html의 플레이스홀더도 치환
           sed -i "s|선생님의_나이스_API_키|${{ secrets.NEIS_API_KEY }}|g" lunch.html
+
+      - name: Verify Injection (Dry Run)
+        run: |
+          echo "Verifying if placeholders were replaced..."
+          # 플레이스홀더가 여전히 남아있는지 확인 (남아있다면 치환 실패로 간주 가능)
+          if grep -q "선생님의_" js/config.js; then
+            echo "⚠️ Warning: Some placeholders still exist in config.js"
+          else
+            echo "✅ Injection looks successful."
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
