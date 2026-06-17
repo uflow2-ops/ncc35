@@ -664,7 +664,10 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
                     const menu = rawMenu.replace(/[0-9. *()]/g, '').split('<br/>').filter(i => i.trim());
                     mealList.innerHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; text-align:left; padding:10px; font-size:1.6rem;">${menu.map(i => `<div>${getMealIcon(i)} ${i}</div>`).join('')}</div>`;
                 } else { mealList.innerHTML = "<div style='padding-top:20px;'>🍱 오늘은 급식 정보가 없어요</div>"; }
-            } catch(e) { console.error("급식 데이터 로드 실패:", e); mealList.innerText = "급식 서버 연결 실패"; }
+            } catch(e) { 
+                console.error("급식 데이터 로드 실패:", e);
+                mealList.innerText = "급식 서버 연결 실패"; 
+            }
         }
 
         async function fetchWeather() {
