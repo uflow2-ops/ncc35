@@ -478,10 +478,6 @@ let viewDate = new Date();
                     <div class="strike-dot"></div>
                     <div class="strike-dot"></div>
                 </div>
-                <div class="noise-meter-container">
-                    <div id="noise-meter-fill" class="noise-meter-fill"></div>
-                </div>
-                <div style="font-size: 1.5rem; margin-top: 5px;">🎤</div>
             </div>`;
         const warning = `<div id="noise-warning" class="noise-warning-indicator">⚠️ 너무 시끄러워요!</div>`;
         document.body.insertAdjacentHTML('beforeend', widget + warning);
@@ -534,11 +530,6 @@ let viewDate = new Date();
             if (!isNoiseMonitoring) return;
             noiseAnalyser.getByteFrequencyData(noiseDataArray);
             let avg = noiseDataArray.reduce((a, b) => a + b) / noiseDataArray.length;
-            let h = Math.min(100, avg * 1.5);
-            
-            const fill = document.getElementById('noise-meter-fill');
-            fill.style.height = h + '%';
-            fill.style.background = h > 75 ? '#f44336' : (h > 45 ? '#ffeb3b' : '#4caf50');
 
             if (avg > noiseThreshold) {
                 if (!noiseHighStartTime) noiseHighStartTime = Date.now();
