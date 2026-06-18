@@ -421,55 +421,54 @@ let viewDate = new Date();
             restoreRouletteState(); // 룰렛 및 전광판 메시지 초기화
         }
     }
+    function checkRoutines(now) {
+        const curTimeNum = now.getHours() * 100 + now.getMinutes();
+        const isMorning = (curTimeNum >= 830 && curTimeNum < 900);
 
-        function checkRoutines(now) {
-            const curTimeNum = now.getHours() * 100 + now.getMinutes();
-            const isMorning = (curTimeNum >= 830 && curTimeNum < 900);
-
-            // [모든 쉬는 시간 감지] 수업 시작 10분 전 및 점심 시간(12:10~13:00)
-            let isAnyBreak = isMorning;
-            classTimes.forEach(timeStr => {
-                const [h, m] = timeStr.split(':').map(Number);
-                const targetTimeNum = h * 100 + m;
-                let sh = h, sm = m - 10;
-                if (sm < 0) { sh--; sm += 60; }
-                const startTimeNum = sh * 100 + sm;
-                
-                if (timeStr === "13:00") { // 점심 시간 특별 연장
-                    if (curTimeNum >= 1210 && curTimeNum < 1300) isAnyBreak = true;
-                } else if (curTimeNum >= startTimeNum && curTimeNum < targetTimeNum) {
-                    isAnyBreak = true;
-                }
-            });
-
-            // 소음 측정기 자동 제어 (수동으로 켠 게 아닐 때만 자동 종료)
-            if (isAnyBreak) {
-                if (!isNoiseMonitoring) startNoiseMonitoring();
-            } else {
-                const manualBtn = document.getElementById('manualNoiseBtn');
-                if (isNoiseMonitoring && (!manualBtn || !manualBtn.innerText.includes('중지'))) {
-                    stopNoiseMonitoring();
-                }
+        // [모든 쉬는 시간 감지] 수업 시작 10분 전 및 점심 시간(12:10~13:00)
+        let isAnyBreak = isMorning;
+        classTimes.forEach(timeStr => {
+            const [h, m] = timeStr.split(':').map(Number);
+            const targetTimeNum = h * 100 + m;
+            let sh = h, sm = m - 10;
+            if (sm < 0) { sh--; sm += 60; }
+            const startTimeNum = sh * 100 + sm;
+            
+            if (timeStr === "13:00") { // 점심 시간 특별 연장
+                if (curTimeNum >= 1210 && curTimeNum < 1300) isAnyBreak = true;
+            } else if (curTimeNum >= startTimeNum && curTimeNum < targetTimeNum) {
+                isAnyBreak = true;
             }
+        });
 
-            // 안내 배너 로직 (기존 아침 및 1교시 유지)
-            if (isMorning) { 
-                if (!routineDismissed.morning && !document.getElementById('routineBanner').classList.contains('show')) {
-                    showRoutineBanner("🌅 아침 활동 안내", routineMsgs.morning, 'morning');
-                } 
-            } else if (curTimeNum === 900 && currentActiveRoutineType === 'morning') {
-                closeRoutineBanner();
-            }
-
-            const isBreak1 = (curTimeNum >= 940 && curTimeNum < 950);
-            if (isBreak1) { 
-                if (!routineDismissed.break1 && !document.getElementById('routineBanner').classList.contains('show')) {
-                    showRoutineBanner("🥛 1교시 쉬는시간", routineMsgs.break1, 'break1');
-                }
-            } else if (curTimeNum === 950 && currentActiveRoutineType === 'break1') {
-                closeRoutineBanner();
+        // 소음 측정기 자동 제어 (수동으로 켠 게 아닐 때만 자동 종료)
+        if (isAnyBreak) {
+            if (!isNoiseMonitoring) startNoiseMonitoring();
+        } else {
+            const manualBtn = document.getElementById('manualNoiseBtn');
+            if (isNoiseMonitoring && (!manualBtn || !manualBtn.innerText.includes('중지'))) {
+                stopNoiseMonitoring();
             }
         }
+
+        // 안내 배너 로직
+        if (isMorning) { 
+            if (!routineDismissed.morning && !document.getElementById('routineBanner').classList.contains('show')) {
+                showRoutineBanner("🌅 아침 활동 안내", routineMsgs.morning, 'morning');
+            } 
+        } else if (curTimeNum === 900 && currentActiveRoutineType === 'morning') {
+            closeRoutineBanner();
+        }
+
+        const isBreak1 = (curTimeNum >= 940 && curTimeNum < 950);
+        if (isBreak1) { 
+            if (!routineDismissed.break1 && !document.getElementById('routineBanner').classList.contains('show')) {
+                showRoutineBanner("🥛 1교시 쉬는시간", routineMsgs.break1, 'break1');
+            }
+        } else if (curTimeNum === 950 && currentActiveRoutineType === 'break1') {
+            closeRoutineBanner();
+        }
+    }
 
         function setupNoiseElements() {
             const bar = `<div id="noise-monitor-bar" class="noise-monitor-bar"><div id="noise-fill" class="noise-fill"></div></div>`;
