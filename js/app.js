@@ -506,7 +506,7 @@ let viewDate = new Date();
             isNoiseMonitoring = false;
             if (noiseStream) { noiseStream.getTracks().forEach(t => t.stop()); noiseStream = null; }
             document.getElementById('noise-widget').style.display = 'none';
-            document.getElementById('noise-warning').style.display = 'none';
+            document.getElementById('noise-warning').classList.remove('show');
         }
 
         function toggleManualNoiseMonitoring() {
@@ -554,9 +554,9 @@ let viewDate = new Date();
 
         function triggerNoiseWarningEffect() {
             const warn = document.getElementById('noise-warning');
-            warn.style.display = 'block';
+            warn.classList.add('show');
             playAlarmSound('tick');
-            setTimeout(() => { warn.style.display = 'none'; }, 2000);
+            setTimeout(() => { warn.classList.remove('show'); }, 2500);
         }
 
         function forceEndBreakByNoise() {
