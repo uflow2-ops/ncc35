@@ -465,6 +465,7 @@ let viewDate = new Date();
             if (isBreak1) { 
                 if (!routineDismissed.break1 && !document.getElementById('routineBanner').classList.contains('show')) {
                     showRoutineBanner("🥛 1교시 쉬는시간", routineMsgs.break1, 'break1');
+                }
             } else if (curTimeNum === 950 && currentActiveRoutineType === 'break1') {
                 closeRoutineBanner();
             }
