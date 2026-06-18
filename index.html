@@ -231,6 +231,25 @@
     <script src="js/data.js"></script>
     <script src="js/app.js"></script>
     <script>
+    // 알림장 열기 함수
+    function openNotepad() {
+        const savedContent = localStorage.getItem('daily_notepad_content') || '';
+        document.getElementById('notepad-content').value = savedContent;
+        document.getElementById('notepadModal').style.display = 'flex';
+    }
+
+    // 알림장 저장 함수
+    function saveNotepad() {
+        const content = document.getElementById('notepad-content').value;
+        localStorage.setItem('daily_notepad_content', content);
+        closeAllModals();
+    }
+
+    // 모든 모달 닫기 공통 함수
+    function closeAllModals() {
+        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+    }
+
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() { navigator.serviceWorker.register('sw.js').catch(function(){}); });
     }
