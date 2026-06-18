@@ -463,6 +463,7 @@ let viewDate = new Date();
                 const source = audioCtx.createMediaStreamSource(noiseStream);
                 noiseAnalyser = audioCtx.createAnalyser();
                 noiseAnalyser.fftSize = 256;
+                noiseAnalyser.smoothingTimeConstant = 0.9; // 소음 바의 움직임을 더 부드럽게 보정
                 source.connect(noiseAnalyser);
                 noiseDataArray = new Uint8Array(noiseAnalyser.frequencyBinCount);
                 isNoiseMonitoring = true;
@@ -597,9 +598,18 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
             let workingDays = 0; let cur = new Date(orderRef.baseDate); cur.setHours(0,0,0,0); let target = new Date(viewDate.toDateString()); target.setHours(0,0,0,0);
             if (cur < target) { let temp = new Date(cur); while(temp < target) { if(temp.getDay() !== 0 && temp.getDay() !== 6) workingDays++; temp.setDate(temp.getDate() + 1); } } 
             else if (cur > target) { let temp = new Date(target); while(temp < cur) { if(temp.getDay() !== 0 && temp.getDay() !== 6) workingDays--; temp.setDate(temp.getDate() + 1); } }
-            let todayStartIdx = (orderRef.startIdx + workingDays) % STUDENT_COUNT; if (todayStartIdx < 0) todayStartIdx += STUDENT_COUNT;
 
-            document.getElementById('dynamic-content').innerHTML = studentData.map((_, i) => `<div style="padding:6px; border-bottom:1px solid #eee;">${i+1}. ${studentData[(todayStartIdx + i) % STUDENT_COUNT].name}</div>`).join('');
+            let todayStartIdx = 0;
+            if (STUDENT_COUNT > 0) {
+                todayStartIdx = (orderRef.startIdx + workingDays) % STUDENT_COUNT;
+                if (todayStartIdx < 0) todayStartIdx += STUDENT_COUNT;
+            }
+
+            const orderList = studentData.length > 0 
+                ? studentData.map((_, i) => `<div style="padding:6px; border-bottom:1px solid #eee;">${i+1}. ${studentData[(todayStartIdx + i) % STUDENT_COUNT].name}</div>`).join('')
+                : `<div style="padding:20px; color:#888; font-size:1.2rem;">📢 설정에서 학생 데이터를<br>불러와 주세요. 📥</div>`;
+            
+            document.getElementById('dynamic-content').innerHTML = orderList;
             
             // [우유 당번] 계산 (별도 날짜 계산 분리 + 2명씩 건너뛰기)
             let milkWorkingDays = 0; 
