@@ -106,6 +106,20 @@
         <button class="side-btn" onclick="closeAllModals()" style="background:#eee;">닫기</button>
     </div></div>
 
+    <div id="dateModal" class="modal">
+        <div class="modal-box" style="max-width:400px;">
+            <h2>📅 날짜 변경</h2>
+            <input type="date" id="date-picker-input" style="font-size:1.8rem; padding:10px; width:100%; border:2px solid var(--border-color); border-radius:10px; text-align:center; font-family:'Jua';">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
+                <button class="side-btn" onclick="goToPrevDay()" style="font-size:1.2rem;">◀ 어제</button>
+                <button class="side-btn" onclick="goToNextDay()" style="font-size:1.2rem;">내일 ▶</button>
+            </div>
+            <button class="side-btn" onclick="goToToday()" style="background:#e3f2fd; margin-top:10px; font-size:1.2rem;">오늘로 돌아오기</button>
+            <button class="side-btn" onclick="applyDate()" style="background:var(--point-color); margin-top:10px; font-size:1.5rem;">✅ 날짜 적용</button>
+            <button class="side-btn" onclick="closeAllModals()" style="background:#eee; margin-top:10px; font-size:1.2rem;">닫기</button>
+        </div>
+    </div>
+
     <div id="customAlarmModal" class="modal"><div class="modal-box" style="max-width:350px;">
         <h2>🔔 알람 예약 (시:분:초)</h2>
         <input type="time" id="custom-alarm-input" step="1" style="font-size:2.5rem; padding:10px; font-family:'Jua'; width:100%; border:2px solid var(--border-color); border-radius:10px; text-align:center;">
