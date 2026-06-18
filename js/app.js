@@ -478,6 +478,13 @@ let viewDate = new Date();
                     <div class="strike-dot"></div>
                     <div class="strike-dot"></div>
                 </div>
+                <div class="noise-level-meter">
+                    <div class="noise-level-cell"></div>
+                    <div class="noise-level-cell"></div>
+                    <div class="noise-level-cell"></div>
+                    <div class="noise-level-cell"></div>
+                    <div class="noise-level-cell"></div>
+                </div>
             </div>`;
         const warning = `<div id="noise-warning" class="noise-warning-indicator">⚠️ 너무 시끄러워요!</div>`;
         document.body.insertAdjacentHTML('beforeend', widget + warning);
@@ -530,6 +537,18 @@ let viewDate = new Date();
             if (!isNoiseMonitoring) return;
             noiseAnalyser.getByteFrequencyData(noiseDataArray);
             let avg = noiseDataArray.reduce((a, b) => a + b) / noiseDataArray.length;
+
+            // 소음 레벨 칸 채우기 시각화 (0~5단계)
+            const level = Math.min(5, Math.floor((avg / noiseThreshold) * 5));
+            const cells = document.querySelectorAll('.noise-level-cell');
+            cells.forEach((cell, i) => {
+                cell.classList.remove('active', 'warning', 'danger');
+                if (i < level) {
+                    cell.classList.add('active');
+                    if (level >= 5) cell.classList.add('danger');
+                    else if (level >= 3) cell.classList.add('warning');
+                }
+            });
 
             if (avg > noiseThreshold) {
                 if (!noiseHighStartTime) noiseHighStartTime = Date.now();
