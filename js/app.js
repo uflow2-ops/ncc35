@@ -1155,8 +1155,31 @@ card.innerHTML = `
         function goToPrevDay() { viewDate.setDate(viewDate.getDate() - 1); renderAll(); fetchMeal(); fetchWeather(); closeAllModals(); }
         function goToNextDay() { viewDate.setDate(viewDate.getDate() + 1); renderAll(); fetchMeal(); fetchWeather(); closeAllModals(); }
         function goToToday() { viewDate=new Date(); renderAll(); fetchMeal(); fetchWeather(); closeAllModals(); }
-        function closeAllModals() { document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); document.getElementById('goal-input').value = cookieGoal; }
+        function closeAllModals() { 
+            document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); 
+            const goalInput = document.getElementById('goal-input');
+            if(goalInput) goalInput.value = cookieGoal; 
+        }
         function saveCookieGoal() { cookieGoal=parseInt(document.getElementById('goal-input').value); localStorage.setItem('cookieGoal_v5', cookieGoal); syncCookies(); closeAllModals(); }
+
+        // --- 알림장 기능 통합 ---
+        function openNotepad() {
+            const savedContent = localStorage.getItem('notepad_v1') || '';
+            document.getElementById('notepad-content').value = savedContent;
+            document.getElementById('notepadModal').style.display = 'flex';
+        }
+        function saveNotepad() {
+            const content = document.getElementById('notepad-content').value;
+            localStorage.setItem('notepad_v1', content);
+            showMarqueeMessage("📝 알림장이 저장되었습니다.", 3000);
+            closeAllModals();
+        }
+        function copyNotepad() {
+            const content = document.getElementById('notepad-content').value;
+            navigator.clipboard.writeText(content).then(() => {
+                alert("알림장 내용이 클립보드에 복사되었습니다! 필요한 곳에 붙여넣기 하세요.");
+            });
+        }
 
         function toggleLunchLayer(show) {
             const l = document.getElementById('lunchLayer'); const f = document.getElementById('lunchFrame');
