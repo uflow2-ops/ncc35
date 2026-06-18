@@ -46,6 +46,7 @@
                     <button class="tool-btn" onclick="document.getElementById('timerModal').style.display='flex'" title="타이머">⏱️</button>
                     <button class="tool-btn" onclick="document.getElementById('customAlarmModal').style.display='flex'" title="알람">🔔</button>
                     <button class="tool-btn" onclick="toggleClockFormat()" title="12/24시간 토글">⚙️</button>
+                    <button class="tool-btn" onclick="openNotepad()" title="알림장">📝</button>
                     <button class="tool-btn" onclick="document.getElementById('dateModal').style.display='flex'" title="날짜 변경">📅</button>
                 </div>
             </div>
@@ -190,6 +191,18 @@
         </div>
         <iframe id="lunchFrame" style="width:100%; flex:1; border:none;"></iframe>
     </div>
+
+    <div id="notepadModal" class="modal">
+        <div class="modal-box" style="max-width: 850px; width: 90%; border-color: #8d6e63;">
+            <h2 style="color: #5d4037; font-size: 2.2rem; margin-bottom: 15px;">📢 오늘의 알림장</h2>
+            <textarea id="notepad-content" style="width: 100%; height: 450px; font-family: 'Jua'; font-size: 2rem; padding: 25px; border-radius: 20px; border: 3px solid #d7ccc8; resize: none; background: #fffdf7; line-height: 1.5;" placeholder="아이들에게 보여줄 내용을 입력하세요..."></textarea>
+            <div style="display: flex; gap: 15px; margin-top: 20px;">
+                <button class="side-btn" onclick="saveNotepad()" style="background: #8d6e63; color: white; flex: 1; font-size: 1.8rem;">✅ 저장하기</button>
+                <button class="side-btn" onclick="closeAllModals()" style="background: #eee; flex: 1; font-size: 1.8rem;">닫기</button>
+            </div>
+        </div>
+    </div>
+
     <div id="gardenLayer" class="slide-layer" style="height:65%; border-top:8px solid #81c784; background: linear-gradient(to bottom, #e8f5e9, #c8e6c9);"><div style="padding:12px 20px; background:#4caf50; color:white; display:flex; justify-content:space-between; align-items:center; z-index:20;" onclick="toggleGarden(false)"><span>🌸 우리 반 생태 정원</span><span style="cursor:pointer;">닫기 ✖</span></div><div id="garden-bg" style="position:absolute; inset:0; top:50px; overflow:hidden;"></div><div id="shared-garden" style="position:absolute; inset:0; top:50px; overflow:hidden;"></div></div>
 
     

@@ -330,3 +330,6 @@
 .slot-gold {
     animation: pulse-gold 0.8s infinite;
 }
+
+#notepad-content:focus { outline: none; border-color: #8d6e63; box-shadow: 0 0 15px rgba(141, 110, 99, 0.2); }
+#notepad-content::placeholder { color: #d7ccc8; font-size: 1.5rem; }

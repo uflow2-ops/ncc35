@@ -45,6 +45,7 @@ let viewDate = new Date();
         let lastDismissedAlarmIdx = -1; // 사용자가 수동으로 닫은 알람의 인덱스 저장
         let currentAlarmIdx = -1;      // 현재 추적 중인 가장 가까운 알람 인덱스
         let weatherWarningMsg = "";    // 기상 특보 메시지 저장용
+        let notepadContent = localStorage.getItem('notepad_v1') || "";
 
         // 소음 관리 변수
         let noiseStream = null, noiseAnalyser = null, noiseDataArray = null;
