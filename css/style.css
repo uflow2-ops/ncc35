@@ -7,12 +7,36 @@
         .neon-text { text-shadow: 0 0 5px #ffb300, 0 0 10px #ffb300, 0 0 20px #ff9800, 0 0 40px #ff9800; font-weight: bold; color: #fffde7; }
         @keyframes marquee { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } }
 
-        /* 대시보드 상단 소음 바 스타일 */
-        .noise-monitor-bar { position: fixed; top: 50px; left: 0; width: 100%; height: 12px; background: #eee; z-index: 9000; display: none; overflow: hidden; border-bottom: 2px solid #ddd; }
-        .noise-fill { height: 100%; width: 0%; background: #4caf50; transition: width 0.1s ease, background 0.3s; }
-        .noise-warning-indicator { position: fixed; top: 65px; right: 20px; z-index: 9001; display: none; background: #f44336; color: white; padding: 5px 15px; border-radius: 20px; font-size: 1.2rem; animation: pulse 0.5s infinite; }
-        .noise-strike-dots { position: fixed; top: 65px; left: 20px; z-index: 9001; display: none; gap: 10px; }
-        .strike-dot { width: 20px; height: 20px; background: #ccc; border-radius: 50%; border: 2px solid #999; }
+        /* 🎤 컴팩트 소음 측정 위젯 스타일 */
+        .noise-widget { 
+            position: fixed; bottom: 30px; left: 30px; 
+            width: auto; height: auto; 
+            background: white; border-radius: 20px; 
+            border: 4px solid var(--border-color); 
+            display: none; padding: 12px 18px; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1); 
+            z-index: 9000; 
+        }
+        .noise-warning-indicator { position: fixed; bottom: 100px; left: 30px; z-index: 9001; display: none; background: #f44336; color: white; padding: 8px 15px; border-radius: 20px; font-size: 1.2rem; animation: pulse 0.5s infinite; white-space: nowrap; }
+        .noise-warning-indicator { 
+            position: fixed; 
+            top: -120px; /* 평소에는 화면 위로 숨김 */
+            left: 50%; 
+            transform: translateX(-50%); 
+            z-index: 9500; 
+            background: #f44336; 
+            color: white; 
+            padding: 15px 40px; 
+            border-radius: 0 0 30px 30px; 
+            font-size: 2.2rem; 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3); 
+            transition: top 0.7s cubic-bezier(0.23, 1, 0.32, 1); 
+            white-space: nowrap; 
+            pointer-events: none;
+        }
+        .noise-warning-indicator.show { top: 50px; animation: pulse 1s infinite; }
+        .noise-strike-dots { display: flex; gap: 10px; }
+        .strike-dot { width: 22px; height: 22px; background: #eee; border-radius: 50%; border: 2px solid #ccc; transition: 0.3s; }
         .strike-dot.active { background: #f44336; border-color: #b71c1c; box-shadow: 0 0 10px #f44336; }
         
         .top-banner { position: fixed; top: -100%; left: 50%; transform: translateX(-50%); width: 70%; max-width: 800px; background: white; border: 6px solid var(--point-color); border-top: none; border-radius: 0 0 35px 35px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 8000; transition: top 0.8s cubic-bezier(0.25, 1, 0.5, 1); padding: 25px; text-align: center; }

@@ -470,12 +470,22 @@ let viewDate = new Date();
         }
     }
 
-        function setupNoiseElements() {
-            const bar = `<div id="noise-monitor-bar" class="noise-monitor-bar"><div id="noise-fill" class="noise-fill"></div></div>`;
-            const warning = `<div id="noise-warning" class="noise-warning-indicator">⚠️ 너무 시끄러워요!</div>`;
-            const strikes = `<div id="noise-strikes" class="noise-strike-dots"><div class="strike-dot"></div><div class="strike-dot"></div><div class="strike-dot"></div></div>`;
-            document.body.insertAdjacentHTML('beforeend', bar + warning + strikes);
-        }
+    function setupNoiseElements() {
+        const widget = `
+            <div id="noise-widget" class="noise-widget">
+                <div id="noise-strikes" class="noise-strike-dots">
+                    <div class="strike-dot"></div>
+                    <div class="strike-dot"></div>
+                    <div class="strike-dot"></div>
+                </div>
+                <div class="noise-meter-container">
+                    <div id="noise-meter-fill" class="noise-meter-fill"></div>
+                </div>
+                <div style="font-size: 1.5rem; margin-top: 5px;">🎤</div>
+            </div>`;
+        const warning = `<div id="noise-warning" class="noise-warning-indicator">⚠️ 너무 시끄러워요!</div>`;
+        document.body.insertAdjacentHTML('beforeend', widget + warning);
+    }
 
         async function startNoiseMonitoring() {
             if (isNoiseMonitoring) return;
@@ -490,8 +500,7 @@ let viewDate = new Date();
                 noiseDataArray = new Uint8Array(noiseAnalyser.frequencyBinCount);
                 isNoiseMonitoring = true;
                 noiseStrikes = 0;
-                document.getElementById('noise-monitor-bar').style.display = 'block';
-                document.getElementById('noise-strikes').style.display = 'flex';
+                document.getElementById('noise-widget').style.display = 'flex';
                 updateNoiseStrikesUI();
                 updateNoiseMonitoring();
             } catch (err) { console.error("마이크 권한 필요:", err); }
@@ -500,9 +509,8 @@ let viewDate = new Date();
         function stopNoiseMonitoring() {
             isNoiseMonitoring = false;
             if (noiseStream) { noiseStream.getTracks().forEach(t => t.stop()); noiseStream = null; }
-            document.getElementById('noise-monitor-bar').style.display = 'none';
+            document.getElementById('noise-widget').style.display = 'none';
             document.getElementById('noise-warning').style.display = 'none';
-            document.getElementById('noise-strikes').style.display = 'none';
         }
 
         function toggleManualNoiseMonitoring() {
@@ -528,9 +536,9 @@ let viewDate = new Date();
             let avg = noiseDataArray.reduce((a, b) => a + b) / noiseDataArray.length;
             let h = Math.min(100, avg * 1.5);
             
-            const fill = document.getElementById('noise-fill');
-            fill.style.width = h + '%';
-            fill.style.background = h > 70 ? '#f44336' : (h > 40 ? '#ffeb3b' : '#4caf50');
+            const fill = document.getElementById('noise-meter-fill');
+            fill.style.height = h + '%';
+            fill.style.background = h > 75 ? '#f44336' : (h > 45 ? '#ffeb3b' : '#4caf50');
 
             if (avg > noiseThreshold) {
                 if (!noiseHighStartTime) noiseHighStartTime = Date.now();
