@@ -425,26 +425,48 @@ let viewDate = new Date();
         function checkRoutines(now) {
             const curTimeNum = now.getHours() * 100 + now.getMinutes();
             const isMorning = (curTimeNum >= 830 && curTimeNum < 900);
-            const isBreak1 = (curTimeNum >= 940 && curTimeNum < 950);
 
+            // [모든 쉬는 시간 감지] 수업 시작 10분 전 및 점심 시간(12:10~13:00)
+            let isAnyBreak = isMorning;
+            classTimes.forEach(timeStr => {
+                const [h, m] = timeStr.split(':').map(Number);
+                const targetTimeNum = h * 100 + m;
+                let sh = h, sm = m - 10;
+                if (sm < 0) { sh--; sm += 60; }
+                const startTimeNum = sh * 100 + sm;
+                
+                if (timeStr === "13:00") { // 점심 시간 특별 연장
+                    if (curTimeNum >= 1210 && curTimeNum < 1300) isAnyBreak = true;
+                } else if (curTimeNum >= startTimeNum && curTimeNum < targetTimeNum) {
+                    isAnyBreak = true;
+                }
+            });
+
+            // 소음 측정기 자동 제어 (수동으로 켠 게 아닐 때만 자동 종료)
+            if (isAnyBreak) {
+                if (!isNoiseMonitoring) startNoiseMonitoring();
+            } else {
+                const manualBtn = document.getElementById('manualNoiseBtn');
+                if (isNoiseMonitoring && (!manualBtn || !manualBtn.innerText.includes('중지'))) {
+                    stopNoiseMonitoring();
+                }
+            }
+
+            // 안내 배너 로직 (기존 아침 및 1교시 유지)
             if (isMorning) { 
                 if (!routineDismissed.morning && !document.getElementById('routineBanner').classList.contains('show')) {
                     showRoutineBanner("🌅 아침 활동 안내", routineMsgs.morning, 'morning');
-                    startNoiseMonitoring();
                 } 
             } else if (curTimeNum === 900 && currentActiveRoutineType === 'morning') {
                 closeRoutineBanner();
-                stopNoiseMonitoring();
             }
 
+            const isBreak1 = (curTimeNum >= 940 && curTimeNum < 950);
             if (isBreak1) { 
                 if (!routineDismissed.break1 && !document.getElementById('routineBanner').classList.contains('show')) {
                     showRoutineBanner("🥛 1교시 쉬는시간", routineMsgs.break1, 'break1');
-                    startNoiseMonitoring();
-                } 
             } else if (curTimeNum === 950 && currentActiveRoutineType === 'break1') {
                 closeRoutineBanner();
-                stopNoiseMonitoring();
             }
         }
 
@@ -481,6 +503,23 @@ let viewDate = new Date();
             document.getElementById('noise-monitor-bar').style.display = 'none';
             document.getElementById('noise-warning').style.display = 'none';
             document.getElementById('noise-strikes').style.display = 'none';
+        }
+
+        function toggleManualNoiseMonitoring() {
+            const btn = document.getElementById('manualNoiseBtn');
+            if (!isNoiseMonitoring) {
+                startNoiseMonitoring();
+                if (btn) {
+                    btn.innerText = '🔊 소음 측정 중지';
+                    btn.style.background = '#f44336';
+                }
+            } else {
+                stopNoiseMonitoring();
+                if (btn) {
+                    btn.innerText = '🔇 소음 측정 시작';
+                    btn.style.background = '#607d8b';
+                }
+            }
         }
 
         function updateNoiseMonitoring() {
@@ -1194,6 +1233,19 @@ function importStudentData(event) {
                     rouletteBtn.innerText = '🎰 오늘의 이벤트 뽑기';
                     rouletteBtn.onclick = openRouletteModal;
                     btn.after(rouletteBtn);
+                }
+                if (btn.innerText.includes('이벤트 뽑기') || btn.id === 'eventRouletteBtn') {
+                    if (!document.getElementById('manualNoiseBtn')) {
+                        const noiseBtn = document.createElement('button');
+                        noiseBtn.className = 'side-btn';
+                        noiseBtn.id = 'manualNoiseBtn';
+                        noiseBtn.style.background = '#607d8b';
+                        noiseBtn.style.color = 'white';
+                        noiseBtn.style.marginTop = '5px';
+                        noiseBtn.innerText = '🔇 소음 측정 시작';
+                        noiseBtn.onclick = toggleManualNoiseMonitoring;
+                        btn.after(noiseBtn);
+                    }
                 }
             });
             if (!document.getElementById('rouletteOverlay')) {
