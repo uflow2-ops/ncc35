@@ -64,7 +64,6 @@
                 </div>
                 <div class="card" style="flex:1;"><span class="big-title">🦋 우리 반 생태 도감</span>
                     <div id="cookie-grid" style="display:grid; grid-template-columns:repeat(5,1fr); gap:10px; width:100%; overflow-y:auto; padding-right:5px;"></div>
-                    <div id="garden-status" style="margin-top:16px; text-align:left; min-height:120px; border-top:2px dashed #c8e6c9; padding-top:12px; color:#3e2723; font-size:1.3rem;"></div>
                 </div>
             </div>
             <div class="card" style="width:22%;">
@@ -219,7 +218,14 @@
         </div>
     </div>
 
-    <div id="gardenLayer" class="slide-layer" style="height:65%; border-top:8px solid #81c784; background: linear-gradient(to bottom, #e8f5e9, #c8e6c9);"><div style="padding:12px 20px; background:#4caf50; color:white; display:flex; justify-content:space-between; align-items:center; z-index:20;" onclick="toggleGarden(false)"><span>🌸 우리 반 생태 정원</span><span style="cursor:pointer;">닫기 ✖</span></div><div id="garden-bg" style="position:absolute; inset:0; top:50px; overflow:hidden;"></div><div id="shared-garden" style="position:absolute; inset:0; top:50px; overflow:hidden;"></div></div>
+    <div id="gardenLayer" class="slide-layer" style="height:65%; border-top:8px solid #81c784; background: linear-gradient(to bottom, #e8f5e9, #c8e6c9);">
+        <div style="padding:12px 20px; background:#4caf50; color:white; display:flex; justify-content:space-between; align-items:center; z-index:20;" onclick="toggleGarden(false)"><span>🌸 우리 반 생태 정원</span><span style="cursor:pointer;">닫기 ✖</span></div>
+        <div id="garden-bg" style="position:absolute; inset:0; top:50px; overflow:hidden;"></div>
+        <div id="shared-garden" style="position:absolute; inset:0; top:50px; overflow:hidden;"></div>
+        <div id="garden-status" style="position:absolute; left:20px; bottom:20px; right:20px; background:rgba(255,255,255,0.9); border:2px solid #a5d6a7; border-radius:20px; padding:14px; color:#3e2723; font-size:1.2rem; line-height:1.5; z-index:30; box-shadow:0 10px 20px rgba(0,0,0,0.08);">
+            생태 정원 상태를 불러오는 중입니다...
+        </div>
+    </div>
 
     
 <div id="creativeMemoModal" class="modal"><div class="modal-box" style="max-width:500px;">
