@@ -1013,6 +1013,65 @@ card.innerHTML = `
                     });
                 }
             });
+            renderGardenStatus();
+        }
+
+        function getBugRole(bug) {
+            const icon = bug && bug.icon ? bug.icon : '';
+            if (icon.includes('🦋') || icon.includes('🐝') || icon.includes('🦟')) return 'pollinator';
+            if (icon.includes('🐞') || icon.includes('🦂') || icon.includes('🕷') || icon.includes('🦗') || icon.includes('🐜')) return 'predator';
+            if (icon.includes('🪱') || icon.includes('🐌')) return 'decomposer';
+            if (icon.includes('🐛')) return 'herbivore';
+            return 'neutral';
+        }
+
+        function calculateGardenHealth() {
+            const totals = { total: 0, pollinator: 0, predator: 0, decomposer: 0, herbivore: 0, neutral: 0 };
+            studentData.forEach(s => {
+                const data = gameData[s.code];
+                if (!data || !Array.isArray(data.garden)) return;
+                data.garden.forEach(bug => {
+                    totals.total += 1;
+                    const role = getBugRole(bug);
+                    totals[role] = (totals[role] || 0) + 1;
+                });
+            });
+            return totals;
+        }
+
+        function renderGardenStatus() {
+            const status = calculateGardenHealth();
+            const statusEl = document.getElementById('garden-status');
+            if (!statusEl) return;
+            const summaryLines = [];
+            if (status.pollinator >= 3) summaryLines.push('🌼 꽃가루 수분이 활발합니다. 과일과 꽃이 더 잘 열릴 거예요.');
+            else if (status.pollinator > 0) summaryLines.push('🌼 수분 곤충이 있습니다. 정원이 더 건강해집니다.');
+            else summaryLines.push('⚠️ 수분 곤충이 적어요. 꽃이 잘 피지 않을 수 있어요.');
+
+            if (status.predator >= 2) summaryLines.push('🐞 천적 곤충이 많아 해충 조절에 도움이 됩니다.');
+            else if (status.predator > 0) summaryLines.push('🐞 천적 곤충이 있어 해충 균형에 도움이 됩니다.');
+            else summaryLines.push('⚠️ 천적 곤충이 부족하면 해충이 늘어날 수 있어요.');
+
+            if (status.decomposer >= 2) summaryLines.push('🪱 분해자가 많아 토양과 영양 순환이 좋아집니다.');
+            else if (status.decomposer > 0) summaryLines.push('🪱 분해자가 있어 흙이 서서히 좋아집니다.');
+            else summaryLines.push('⚠️ 분해자 수가 적으면 토양 회복이 느릴 수 있어요.');
+
+            if (status.herbivore >= 4) summaryLines.push('🌿 초식곤충도 많아 식물과의 균형을 잘 살펴보세요.');
+
+            const summary = summaryLines.join('<br>');
+            statusEl.innerHTML = `
+                <div style="display:grid; grid-template-columns: repeat(2, minmax(110px, 1fr)); gap:8px; font-weight:bold; color:#2e7d32;">
+                    <div>총 곤충: ${status.total}</div>
+                    <div>수분자: ${status.pollinator}</div>
+                    <div>천적: ${status.predator}</div>
+                    <div>분해자: ${status.decomposer}</div>
+                    <div>초식곤충: ${status.herbivore}</div>
+                    <div>기타: ${status.neutral}</div>
+                </div>
+                <div style="margin-top:12px; line-height:1.5; color:#4e342e; font-size:1.1rem;">
+                    ${summary}
+                </div>
+            `;
         }
 
         function drawGardenBackground() {
