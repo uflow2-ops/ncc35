@@ -1013,7 +1013,11 @@ card.innerHTML = `
                     });
                 }
             });
-            renderGardenStatus();
+            const status = calculateGardenHealth();
+            renderGardenFlowers(status);
+            renderGardenPredatorActions(status);
+            renderGardenSoil(status);
+            renderGardenStatus(status);
         }
 
         function getBugRole(bug) {
@@ -1039,38 +1043,71 @@ card.innerHTML = `
             return totals;
         }
 
-        function renderGardenStatus() {
-            const status = calculateGardenHealth();
+        function renderGardenFlowers(status) {
+            const flowerArea = document.getElementById('garden-flowers');
+            if (!flowerArea) return;
+            flowerArea.innerHTML = '';
+            const flowerCount = Math.min(24, 6 + status.pollinator * 2);
+            const types = ['🌸','🌼','🌻','🌿'];
+            for (let i = 0; i < flowerCount; i++) {
+                const span = document.createElement('span');
+                span.className = 'flower-spot';
+                span.innerText = types[i % types.length];
+                span.style.left = Math.floor(Math.random() * 88 + 5) + '%';
+                span.style.top = Math.floor(Math.random() * 40 + 10) + '%';
+                span.style.fontSize = `${1.8 + Math.random() * 1.2}rem`;
+                span.style.animationDuration = `${4 + Math.random() * 3}s`;
+                flowerArea.appendChild(span);
+            }
+        }
+
+        function renderGardenPredatorActions(status) {
+            const predatorArea = document.getElementById('garden-predators');
+            if (!predatorArea) return;
+            predatorArea.innerHTML = '';
+            if (status.predator > 0 && status.herbivore > 0) {
+                const count = Math.min(3, status.predator);
+                for (let i = 0; i < count; i++) {
+                    const span = document.createElement('span');
+                    span.className = 'predator-chase' + (i % 2 === 1 ? ' predator-two' : '');
+                    span.innerText = i % 2 === 0 ? '🐞' : '🕷️';
+                    span.style.animationDelay = `${i * 1.2}s`;
+                    span.style.left = `${10 + i * 18}%`;
+                    span.style.top = `${25 + i * 10}%`;
+                    predatorArea.appendChild(span);
+                }
+            }
+        }
+
+        function renderGardenSoil(status) {
+            const soil = document.getElementById('garden-soil');
+            if (!soil) return;
+            const soilLevel = Math.min(5, Math.max(1, status.decomposer));
+            const soilTone = ['#a1887f','#8d6e63','#795548','#5d4037','#4e342e'];
+            const richness = ['약함','보통','좋음','매우좋음','건강함'];
+            const wormCount = Math.min(4, status.decomposer + 1);
+            soil.innerHTML = `
+                <div class="soil-strip" style="background: linear-gradient(180deg, ${soilTone[soilLevel-1]} 20%, #3e2723 100%);"></div>
+                <div class="soil-info">🌱 토양 건강: <b>${richness[soilLevel-1]}</b></div>
+                <div class="soil-worms">${'🪱'.repeat(wormCount)}</div>
+            `;
+        }
+
+        function renderGardenStatus(status) {
             const statusEl = document.getElementById('garden-status');
             if (!statusEl) return;
-            const summaryLines = [];
-            if (status.pollinator >= 3) summaryLines.push('🌼 꽃가루 수분이 활발합니다. 과일과 꽃이 더 잘 열릴 거예요.');
-            else if (status.pollinator > 0) summaryLines.push('🌼 수분 곤충이 있습니다. 정원이 더 건강해집니다.');
-            else summaryLines.push('⚠️ 수분 곤충이 적어요. 꽃이 잘 피지 않을 수 있어요.');
+            const pollinatorText = status.pollinator >= 3 ? '꽃가루 수분이 매우 활발해요.' : status.pollinator > 0 ? '수분 곤충이 있어요.' : '수분 곤충이 부족해요.';
+            const predatorText = status.predator >= 2 ? '천적 곤충이 해충을 잡고 있어요.' : status.predator > 0 ? '천적 곤충이 있어요.' : '천적 곤충이 부족해요.';
+            const soilText = status.decomposer >= 2 ? '분해자가 많아 토양이 건강해요.' : status.decomposer > 0 ? '토양이 서서히 좋아지고 있어요.' : '토양 회복을 위해 분해자가 필요해요.';
+            const herbText = status.herbivore >= 4 ? '초식곤충이 많아 식물 균형을 지켜주세요.' : '';
 
-            if (status.predator >= 2) summaryLines.push('🐞 천적 곤충이 많아 해충 조절에 도움이 됩니다.');
-            else if (status.predator > 0) summaryLines.push('🐞 천적 곤충이 있어 해충 균형에 도움이 됩니다.');
-            else summaryLines.push('⚠️ 천적 곤충이 부족하면 해충이 늘어날 수 있어요.');
-
-            if (status.decomposer >= 2) summaryLines.push('🪱 분해자가 많아 토양과 영양 순환이 좋아집니다.');
-            else if (status.decomposer > 0) summaryLines.push('🪱 분해자가 있어 흙이 서서히 좋아집니다.');
-            else summaryLines.push('⚠️ 분해자 수가 적으면 토양 회복이 느릴 수 있어요.');
-
-            if (status.herbivore >= 4) summaryLines.push('🌿 초식곤충도 많아 식물과의 균형을 잘 살펴보세요.');
-
-            const summary = summaryLines.join('<br>');
             statusEl.innerHTML = `
-                <div style="display:grid; grid-template-columns: repeat(2, minmax(110px, 1fr)); gap:8px; font-weight:bold; color:#2e7d32;">
-                    <div>총 곤충: ${status.total}</div>
-                    <div>수분자: ${status.pollinator}</div>
-                    <div>천적: ${status.predator}</div>
-                    <div>분해자: ${status.decomposer}</div>
-                    <div>초식곤충: ${status.herbivore}</div>
-                    <div>기타: ${status.neutral}</div>
+                <div class="garden-status-grid">
+                    <div class="garden-status-card"><div class="garden-status-icon">🌸</div><div><b>수분자</b><br>${status.pollinator}마리</div></div>
+                    <div class="garden-status-card"><div class="garden-status-icon">🐞</div><div><b>천적</b><br>${status.predator}마리</div></div>
+                    <div class="garden-status-card"><div class="garden-status-icon">🪱</div><div><b>토양 분해자</b><br>${status.decomposer}마리</div></div>
                 </div>
-                <div style="margin-top:12px; line-height:1.5; color:#4e342e; font-size:1.1rem;">
-                    ${summary}
-                </div>
+                <div class="garden-status-summary">${pollinatorText}<br>${predatorText}<br>${soilText}${herbText ? `<br>${herbText}` : ''}</div>
             `;
         }
 
