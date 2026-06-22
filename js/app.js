@@ -1100,18 +1100,13 @@ card.innerHTML = `
         function renderGardenStatus(status) {
             const statusEl = document.getElementById('garden-status');
             if (!statusEl) return;
-            const pollinatorText = status.pollinator >= 3 ? '꽃가루 수분이 매우 활발해요.' : status.pollinator > 0 ? '수분 곤충이 있어요.' : '수분 곤충이 부족해요.';
-            const predatorText = status.predator >= 2 ? '천적 곤충이 해충을 잡고 있어요.' : status.predator > 0 ? '천적 곤충이 있어요.' : '천적 곤충이 부족해요.';
-            const soilText = status.decomposer >= 2 ? '분해자가 많아 토양이 건강해요.' : status.decomposer > 0 ? '토양이 서서히 좋아지고 있어요.' : '토양 회복을 위해 분해자가 필요해요.';
-            const herbText = status.herbivore >= 4 ? '초식곤충이 많아 식물 균형을 지켜주세요.' : '';
 
             statusEl.innerHTML = `
                 <div class="garden-status-grid">
-                    <div class="garden-status-card"><div class="garden-status-icon">🌸</div><div><b>수분자</b><br>${status.pollinator}마리</div></div>
-                    <div class="garden-status-card"><div class="garden-status-icon">🐞</div><div><b>천적</b><br>${status.predator}마리</div></div>
-                    <div class="garden-status-card"><div class="garden-status-icon">🪱</div><div><b>토양 분해자</b><br>${status.decomposer}마리</div></div>
+                    <div class="garden-status-card"><div class="garden-status-icon">🌸</div><div><b>수분 매개 곤충</b><br>${status.pollinator}마리</div></div>
+                    <div class="garden-status-card"><div class="garden-status-icon">🐞</div><div><b>천적 곤충</b><br>${status.predator}마리</div></div>
+                    <div class="garden-status-card"><div class="garden-status-icon">🪱</div><div><b>토양 분해 동물</b><br>${status.decomposer}마리</div></div>
                 </div>
-                <div class="garden-status-summary">${pollinatorText}<br>${predatorText}<br>${soilText}${herbText ? `<br>${herbText}` : ''}</div>
             `;
         }
 
