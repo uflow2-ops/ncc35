@@ -771,7 +771,7 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
                     else if (sky === "4") { skyIcon = "☁️"; skyT = "흐림"; } 
                 }
                 let dustHtml = "";
-                try { const dRes = await fetch(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${WEATHER_KEY}&returnType=json&numOfRows=100&pageNo=1&sidoName=${encodeURIComponent('강원')}&ver=1.0`); const dData = await dRes.json(); const chuncheonDust = dData.response?.body?.items?.find(i => i.stationName.includes("중앙로") || i.stationName.includes("석사동"));
+                try { const dRes = await fetch(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${WEATHER_KEY}&returnType=json&numOfRows=100&pageNo=1&sidoName=${encodeURIComponent(currentLoc.sido || '강원')}&ver=1.0`); const dData = await dRes.json(); const chuncheonDust = dData.response?.body?.items?.find(i => i.stationName.includes("중앙로") || i.stationName.includes("석사동"));
 
                     const pmValue = chuncheonDust ? parseInt(chuncheonDust.pm10Value, 10) : NaN;
                     const tVal = parseFloat(temp);
