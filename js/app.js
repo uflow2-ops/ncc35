@@ -1103,9 +1103,30 @@ card.innerHTML = `
 
             statusEl.innerHTML = `
                 <div class="garden-status-grid">
-                    <div class="garden-status-card"><div class="garden-status-icon">🌸</div><div><b>수분 매개 곤충</b><br>${status.pollinator}마리</div></div>
-                    <div class="garden-status-card"><div class="garden-status-icon">🐞</div><div><b>천적 곤충</b><br>${status.predator}마리</div></div>
-                    <div class="garden-status-card"><div class="garden-status-icon">🪱</div><div><b>토양 분해 동물</b><br>${status.decomposer}마리</div></div>
+                    <div class="garden-status-card">
+                        <div class="garden-status-icon">🌸</div>
+                        <div>
+                            <b>수분 매개 곤충</b><br>
+                            <span style="font-size:0.9rem; color:#666;">꽃의 꽃가루를 옮겨 식물이 열매를 맺을 수 있게 도와주는 곤충들 (나비, 벌, 잠자리 등)</span><br>
+                            ${status.pollinator}마리
+                        </div>
+                    </div>
+                    <div class="garden-status-card">
+                        <div class="garden-status-icon">🐞</div>
+                        <div>
+                            <b>천적 곤충</b><br>
+                            <span style="font-size:0.9rem; color:#666;">해로운 곤충을 잡아먹어 정원을 보호하는 곤충들 (무당벌레, 거미, 사마귀, 개미 등)</span><br>
+                            ${status.predator}마리
+                        </div>
+                    </div>
+                    <div class="garden-status-card">
+                        <div class="garden-status-icon">🪱</div>
+                        <div>
+                            <b>토양 분해 동물</b><br>
+                            <span style="font-size:0.9rem; color:#666;">죽은 식물과 동물을 분해해서 토양을 비옥하게 만드는 동물들 (지렁이, 달팽이 등)</span><br>
+                            ${status.decomposer}마리
+                        </div>
+                    </div>
                 </div>
             `;
         }
