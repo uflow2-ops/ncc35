@@ -486,6 +486,7 @@ let viewDate = new Date();
                     <div class="noise-level-cell"></div>
                     <div class="noise-level-cell"></div>
                 </div>
+                <div id="noise-value" style="font-size:1.4rem; font-weight:bold; color:#555;">0</div>
             </div>`;
         const warning = `<div id="noise-warning" class="noise-warning-indicator">⚠️ 너무 시끄러워요!</div>`;
         document.body.insertAdjacentHTML('beforeend', widget + warning);
@@ -550,6 +551,9 @@ let viewDate = new Date();
                     else if (level >= 3) cell.classList.add('warning');
                 }
             });
+
+            const noiseValueEl = document.getElementById('noise-value');
+            if (noiseValueEl) noiseValueEl.innerText = Math.round(avg);
 
             if (avg > noiseThreshold) {
                 if (!noiseHighStartTime) noiseHighStartTime = Date.now();
