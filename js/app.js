@@ -753,8 +753,12 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
             }
             const baseDate = toLocalYmdCompact(baseDateObj);
             const baseTime = baseHour.toString().padStart(2, '0') + '00';
+            const savedLocIdx = parseInt(localStorage.getItem('weatherLocationIdx_v1') || String(CLASS_CONFIG.defaultLocationIndex), 10);
+            const currentLoc = CLASS_CONFIG.locations[savedLocIdx] || CLASS_CONFIG.locations[CLASS_CONFIG.defaultLocationIndex];
+            const nx = currentLoc.nx;
+            const ny = currentLoc.ny;
             try {
-                const vRes = await fetch(`https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst?serviceKey=${WEATHER_KEY}&pageNo=1&numOfRows=60&dataType=JSON&base_date=${baseDate}&base_time=${baseTime}&nx=${weatherGrid.nx}&ny=${weatherGrid.ny}`);
+                const vRes = await fetch(`https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst?serviceKey=${WEATHER_KEY}&pageNo=1&numOfRows=60&dataType=JSON&base_date=${baseDate}&base_time=${baseTime}&nx=${nx}&ny=${ny}`);
                 const vData = await vRes.json(); 
                 let temp = "--", skyIcon = "☀️", skyT = "맑음", pty = "0", sky = "1";
                 if (vData.response?.body?.items?.item) { 
@@ -1297,6 +1301,27 @@ card.innerHTML = `
             if(goalInput) goalInput.value = cookieGoal; 
         }
         function saveCookieGoal() { cookieGoal=parseInt(document.getElementById('goal-input').value); localStorage.setItem('cookieGoal_v5', cookieGoal); syncCookies(); closeAllModals(); }
+
+        function openLocationModal() {
+            const select = document.getElementById('location-select');
+            if (!select) return;
+            select.innerHTML = CLASS_CONFIG.locations.map((loc, idx) => 
+                `<option value="${idx}">${loc.name}</option>`
+            ).join('');
+            const savedIdx = parseInt(localStorage.getItem('weatherLocationIdx_v1') || String(CLASS_CONFIG.defaultLocationIndex), 10);
+            select.value = savedIdx;
+            document.getElementById('current-location-label').innerText = CLASS_CONFIG.locations[savedIdx]?.name || '-';
+            document.getElementById('locationModal').style.display = 'flex';
+        }
+        function saveLocation() {
+            const select = document.getElementById('location-select');
+            if (!select) return;
+            const idx = parseInt(select.value, 10);
+            localStorage.setItem('weatherLocationIdx_v1', idx);
+            document.getElementById('current-location-label').innerText = CLASS_CONFIG.locations[idx]?.name || '-';
+            closeAllModals();
+            fetchWeather();
+        }
 
         // --- 알림장 기능 통합 ---
         function openNotepad() {

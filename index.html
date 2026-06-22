@@ -60,7 +60,7 @@
             <div style="flex:1.6; display:flex; flex-direction:column; gap:15px;">
                 <div style="display:flex; gap:15px; height:38%;">
                     <div class="card" style="flex:1.3;"><span class="big-title">🍚 오늘의 급식</span><div id="meal-list"></div></div>
-                    <div class="card" style="flex:0.7;"><span class="big-title">☀️ 날씨 & 먼지</span><div id="weather-info"></div></div>
+                    <div class="card" style="flex:0.7;"><span class="big-title">☀️ 날씨 & 먼지</span><button onclick="openLocationModal()" style="position:absolute; right:0; top:0; background:none; border:none; cursor:pointer; font-size:22px;" title="위치 설정">📍</button><div id="weather-info"></div></div>
                 </div>
                 <div class="card" style="flex:1;"><span class="big-title">🦋 우리 반 생태 도감</span>
                     <div id="cookie-grid" style="display:grid; grid-template-columns:repeat(5,1fr); gap:10px; width:100%; overflow-y:auto; padding-right:5px;"></div>
@@ -197,6 +197,16 @@
     <div id="cookieGoalModal" class="modal"><div class="modal-box" style="max-width:350px;"><h2>⚙️ 쿠키 목표 설정</h2><input type="number" id="goal-input" style="font-size:1.8rem; width:100%; text-align:center;"><button class="side-btn" onclick="saveCookieGoal()" style="background:var(--point-color); margin-top:25px;">저장</button><button class="side-btn" onclick="closeAllModals()" style="margin-top:10px;">닫기</button></div></div>
     
     <div id="quickSubModal" class="modal"><div class="modal-box" style="max-width:450px;"><h2 id="quick-title">교시 변경</h2><div id="quick-sub-list" style="display:grid; grid-template-columns:repeat(3,1fr); gap:12px;"></div><button class="side-btn" onclick="closeAllModals()" style="margin-top:15px;">취소</button></div></div>
+    <div id="locationModal" class="modal"><div class="modal-box" style="max-width:500px;">
+        <h2>📍 날씨 위치 설정</h2>
+        <p style="color:#666; margin-bottom:15px;">지역을 선택하면 해당 지역의 날씨가 표시됩니다.</p>
+        <select id="location-select" style="width:100%; font-size:22px; padding:12px; font-family:'Jua'; border:2px solid var(--border-color); border-radius:10px; margin-bottom:15px;"></select>
+        <div style="text-align:left; font-size:1.2rem; color:#555; background:#f5f5f5; padding:10px; border-radius:10px;">
+            <b>현재 선택:</b> <span id="current-location-label">-</span>
+        </div>
+        <button class="side-btn" onclick="saveLocation()" style="background:var(--point-color); margin-top:15px;">✅ 저장</button>
+        <button class="side-btn" onclick="closeAllModals()" style="background:#eee; margin-top:10px;">닫기</button>
+    </div></div>
     <div id="dahandLayer" class="slide-layer" style="height:55%; border-top:8px solid var(--dahand-mint);"><div style="padding:12px 20px; background:var(--dahand-mint); color:white; display:flex; justify-content:space-between; align-items:center;" onclick="toggleDahand(false)"><span>🚀 다했니?</span><span>내려놓기 ✖</span></div><iframe id="dahandFrame" style="width:100%; flex:1; border:none;"></iframe></div>
     <div id="lunchLayer" class="slide-layer" style="height:70%; border-top:8px solid #42a5f5; background:#e3f2fd;">
         <div style="padding:12px 20px; background:#42a5f5; color:white; display:flex; justify-content:space-between; align-items:center;" onclick="toggleLunchLayer(false)">
