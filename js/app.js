@@ -1035,6 +1035,8 @@ card.innerHTML = `
 
         function calculateGardenHealth() {
             const totals = { total: 0, pollinator: 0, predator: 0, decomposer: 0, herbivore: 0, neutral: 0 };
+            const details = { pollinator: [], predator: [], decomposer: [], herbivore: [], neutral: [] };
+            
             studentData.forEach(s => {
                 const data = gameData[s.code];
                 if (!data || !Array.isArray(data.garden)) return;
@@ -1042,9 +1044,10 @@ card.innerHTML = `
                     totals.total += 1;
                     const role = getBugRole(bug);
                     totals[role] = (totals[role] || 0) + 1;
+                    details[role].push({ student: s.name, bug: bug });
                 });
             });
-            return totals;
+            return { totals, details };
         }
 
         function renderGardenFlowers(status) {
@@ -1101,6 +1104,14 @@ card.innerHTML = `
             const statusEl = document.getElementById('garden-status');
             if (!statusEl) return;
 
+            const totals = status.totals || status;
+            const details = status.details || { pollinator: [], predator: [], decomposer: [] };
+
+            const formatList = (list) => {
+                if (!list || list.length === 0) return '없음';
+                return list.map(item => `${item.student}의 ${item.bug.icon} ${item.bug.name}`).join(', ');
+            };
+
             statusEl.innerHTML = `
                 <div class="garden-status-grid">
                     <div class="garden-status-card">
@@ -1108,7 +1119,8 @@ card.innerHTML = `
                         <div>
                             <b>수분 매개 곤충</b><br>
                             <span style="font-size:0.9rem; color:#666;">꽃의 꽃가루를 옮겨 식물이 열매를 맺을 수 있게 도와주는 곤충들 (나비, 벌, 잠자리 등)</span><br>
-                            ${status.pollinator}마리
+                            ${totals.pollinator}마리<br>
+                            <span style="font-size:0.85rem; color:#555; margin-top:4px; display:inline-block;">${formatList(details.pollinator)}</span>
                         </div>
                     </div>
                     <div class="garden-status-card">
@@ -1116,7 +1128,8 @@ card.innerHTML = `
                         <div>
                             <b>천적 곤충</b><br>
                             <span style="font-size:0.9rem; color:#666;">해로운 곤충을 잡아먹어 정원을 보호하는 곤충들 (무당벌레, 거미, 사마귀, 개미 등)</span><br>
-                            ${status.predator}마리
+                            ${totals.predator}마리<br>
+                            <span style="font-size:0.85rem; color:#555; margin-top:4px; display:inline-block;">${formatList(details.predator)}</span>
                         </div>
                     </div>
                     <div class="garden-status-card">
@@ -1124,7 +1137,8 @@ card.innerHTML = `
                         <div>
                             <b>토양 분해 동물</b><br>
                             <span style="font-size:0.9rem; color:#666;">죽은 식물과 동물을 분해해서 토양을 비옥하게 만드는 동물들 (지렁이, 달팽이 등)</span><br>
-                            ${status.decomposer}마리
+                            ${totals.decomposer}마리<br>
+                            <span style="font-size:0.85rem; color:#555; margin-top:4px; display:inline-block;">${formatList(details.decomposer)}</span>
                         </div>
                     </div>
                 </div>
