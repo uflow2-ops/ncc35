@@ -1118,27 +1118,33 @@ card.innerHTML = `
                         <div class="garden-status-icon">🌸</div>
                         <div>
                             <b>수분 매개 곤충</b><br>
-                            <span style="font-size:0.9rem; color:#666;">꽃의 꽃가루를 옮겨 식물이 열매를 맺을 수 있게 도와주는 곤충들 (나비, 벌, 잠자리 등)</span><br>
-                            ${totals.pollinator}마리<br>
-                            <span style="font-size:0.85rem; color:#555; margin-top:4px; display:inline-block;">${formatList(details.pollinator)}</span>
+                            <span style="font-size:0.9rem; color:#666; background:rgba(255,255,255,0.5); padding:4px 8px; border-radius:6px; display:inline-block;">꽃의 꽃가루를 옮겨 식물이 열매를 맺을 수 있게 도와주는 곤충들 (나비, 벌, 잠자리 등)</span><br>
+                            <div style="margin-top:6px;">
+                                <b style="font-size:1rem;">${totals.pollinator}마리</b>
+                                <span style="font-size:0.85rem; color:#555; background:rgba(255,255,255,0.7); padding:4px 10px; border-radius:8px; margin-left:8px;">${formatList(details.pollinator)}</span>
+                            </div>
                         </div>
                     </div>
                     <div class="garden-status-card">
                         <div class="garden-status-icon">🐞</div>
                         <div>
                             <b>천적 곤충</b><br>
-                            <span style="font-size:0.9rem; color:#666;">해로운 곤충을 잡아먹어 정원을 보호하는 곤충들 (무당벌레, 거미, 사마귀, 개미 등)</span><br>
-                            ${totals.predator}마리<br>
-                            <span style="font-size:0.85rem; color:#555; margin-top:4px; display:inline-block;">${formatList(details.predator)}</span>
+                            <span style="font-size:0.9rem; color:#666; background:rgba(255,255,255,0.5); padding:4px 8px; border-radius:6px; display:inline-block;">해로운 곤충을 잡아먹어 정원을 보호하는 곤충들 (무당벌레, 거미, 사마귀, 개미 등)</span><br>
+                            <div style="margin-top:6px;">
+                                <b style="font-size:1rem;">${totals.predator}마리</b>
+                                <span style="font-size:0.85rem; color:#555; background:rgba(255,255,255,0.7); padding:4px 10px; border-radius:8px; margin-left:8px;">${formatList(details.predator)}</span>
+                            </div>
                         </div>
                     </div>
                     <div class="garden-status-card">
                         <div class="garden-status-icon">🪱</div>
                         <div>
                             <b>토양 분해 동물</b><br>
-                            <span style="font-size:0.9rem; color:#666;">죽은 식물과 동물을 분해해서 토양을 비옥하게 만드는 동물들 (지렁이, 달팽이 등)</span><br>
-                            ${totals.decomposer}마리<br>
-                            <span style="font-size:0.85rem; color:#555; margin-top:4px; display:inline-block;">${formatList(details.decomposer)}</span>
+                            <span style="font-size:0.9rem; color:#666; background:rgba(255,255,255,0.5); padding:4px 8px; border-radius:6px; display:inline-block;">죽은 식물과 동물을 분해해서 토양을 비옥하게 만드는 동물들 (지렁이, 달팽이 등)</span><br>
+                            <div style="margin-top:6px;">
+                                <b style="font-size:1rem;">${totals.decomposer}마리</b>
+                                <span style="font-size:0.85rem; color:#555; background:rgba(255,255,255,0.7); padding:4px 10px; border-radius:8px; margin-left:8px;">${formatList(details.decomposer)}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
