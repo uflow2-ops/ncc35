@@ -60,7 +60,7 @@
             <div style="flex:1.6; display:flex; flex-direction:column; gap:15px;">
                 <div style="display:flex; gap:15px; height:38%;">
                     <div class="card" style="flex:1.3;"><span class="big-title">🍚 오늘의 급식</span><div id="meal-list"></div></div>
-                    <div class="card" style="flex:0.7;"><span class="big-title">☀️ 날씨 & 먼지</span><button onclick="openLocationModal()" style="position:absolute; right:0; top:0; background:none; border:none; cursor:pointer; font-size:22px;" title="위치 설정">📍</button><div id="weather-info"></div></div>
+                    <div class="card" style="flex:0.7; position:relative;"><span class="big-title">☀️ 날씨 & 먼지</span><button onclick="openLocationModal()" style="position:absolute; right:5px; top:5px; background:none; border:none; cursor:pointer; font-size:22px; z-index:10;" title="위치 설정">📍</button><div id="weather-info"></div></div>
                 </div>
                 <div class="card" style="flex:1;"><span class="big-title">🦋 우리 반 생태 도감</span>
                     <div id="cookie-grid" style="display:grid; grid-template-columns:repeat(5,1fr); gap:10px; width:100%; overflow-y:auto; padding-right:5px;"></div>
