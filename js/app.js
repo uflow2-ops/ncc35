@@ -1311,7 +1311,19 @@ card.innerHTML = `
             const savedIdx = parseInt(localStorage.getItem('weatherLocationIdx_v1') || String(CLASS_CONFIG.defaultLocationIndex), 10);
             select.value = savedIdx;
             document.getElementById('current-location-label').innerText = CLASS_CONFIG.locations[savedIdx]?.name || '-';
+            document.getElementById('location-search').value = '';
             document.getElementById('locationModal').style.display = 'flex';
+        }
+        function filterLocations() {
+            const search = document.getElementById('location-search').value.toLowerCase();
+            const select = document.getElementById('location-select');
+            if (!select) return;
+            const filtered = CLASS_CONFIG.locations
+                .map((loc, idx) => ({ ...loc, idx }))
+                .filter(loc => loc.name.toLowerCase().includes(search));
+            select.innerHTML = filtered.map(loc => 
+                `<option value="${loc.idx}">${loc.name}</option>`
+            ).join('');
         }
         function saveLocation() {
             const select = document.getElementById('location-select');
