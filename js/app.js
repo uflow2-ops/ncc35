@@ -1272,7 +1272,12 @@ card.innerHTML = `
             renderAll(); closeAllModals(); 
         }
 
-        function openQuickSubModal(i) { document.getElementById('quick-sub-list').innerHTML=subjects.map(s=>`<button class="side-btn" onclick="changeSubTemp(${i},'${s}')">${s}</button>`).join(''); document.getElementById('quickSubModal').style.display='flex'; }
+        function openQuickSubModal(i) { 
+            const dk = viewDate.toLocaleDateString('sv-SE');
+            const isMove = temporaryTT[dk] && temporaryTT[dk][i] ? temporaryTT[dk][i].m : false;
+            document.getElementById('quick-sub-list').innerHTML=subjects.map(s=>`<button class="side-btn" onclick="changeSubTemp(${i},'${s}')">${s}</button>`).join('') + `<br><label style="font-size:1.2rem; margin-top:10px; display:inline-block;"><input type="checkbox" id="quick-move-chk" ${isMove?'checked':''}> 이동 수업</label>`;
+            document.getElementById('quickSubModal').style.display='flex'; 
+        }
         function changeSubTemp(i, s) {
             const dk = viewDate.toLocaleDateString('sv-SE'); 
             const dNames = ["일", "월", "화", "수", "목", "금", "토"];
@@ -1284,7 +1289,8 @@ card.innerHTML = `
                 temporaryTT[dk] = JSON.parse(JSON.stringify(baseTT)); 
             }
 
-            temporaryTT[dk][i] = { s: s, m: temporaryTT[dk][i].m || false }; 
+            const isMove = document.getElementById('quick-move-chk') ? document.getElementById('quick-move-chk').checked : false;
+            temporaryTT[dk][i] = { s: s, m: isMove }; 
             
             localStorage.setItem('temporaryTT_v1', JSON.stringify(temporaryTT)); 
             
