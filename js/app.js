@@ -14,10 +14,11 @@ let viewDate = new Date();
         let classTimes = JSON.parse(localStorage.getItem('classTimes_v7')) || ["09:00", "09:50", "10:40", "11:30", "13:00", "13:40"];
         let orderRef = JSON.parse(localStorage.getItem('order_v5')) || { baseDate: "2026-03-30", startIdx: 0 };
         let cookieGoal = parseInt(localStorage.getItem('cookieGoal_v5')) || 500;
-        let routineMsgs = JSON.parse(localStorage.getItem('routine_msgs_v1')) || { morning: "1. 안내장 제출\n2. 오늘 교과서 준비\n3. 우유 당번 우유 가져오기\n4. 책 읽기", break1: "1. 우유 마시기\n2. 화장실 다녀오기" };
+        let routineMsgs = JSON.parse(localStorage.getItem('routine_msgs_v1')) || { morning: "1. 안내장 제출\n2. 오늘 교과서 준비\n3. 우유 당번 우유 가져오기\n4. 독서통장 쓰기", break1: "1. 우유 마시기\n2. 화장실 다녀오기" };
         let routineDismissed = { morning: false, break1: false };
         let lastCheckedDay = new Date().getDate();
         let currentActiveRoutineType = "";
+        let readingJournalAlarmFired = false;
         let temporaryTT = JSON.parse(localStorage.getItem('temporaryTT_v1')) || {}, homeInterval;
 
         function toLocalDateStr(d) {
@@ -411,6 +412,7 @@ let viewDate = new Date();
             // 실제 날짜가 바뀌었을 때 (자정 경과)
             lastCheckedDay = currentDay;
             routineDismissed = { morning: false, break1: false };
+            readingJournalAlarmFired = false; // 독서통장 알람 초기화
             lunchAutoOpened = false;
             lunchResultShown = false;
             lastDismissedAlarmIdx = -1; // 알람 닫기 기록 초기화
@@ -459,6 +461,27 @@ let viewDate = new Date();
             } 
         } else if (curTimeNum === 900 && currentActiveRoutineType === 'morning') {
             closeRoutineBanner();
+        }
+
+        // 독서통장 쓰기 알람
+        // 1교시가 이동 수업이면 10분 전(8:50)에, 일반 수업이면 5분 전(8:55)에 알람
+        if (!readingJournalAlarmFired) {
+            const dName = ["일","월","화","수","목","금","토"][viewDate.getDay()];
+            const todayTT = temporaryTT[viewDate.toLocaleDateString('sv-SE')] || weeklyTT[dName];
+            const isFirstPeriodMove = todayTT && todayTT[0] && todayTT[0].m;
+            
+            // 1교시가 이동 수업이고 알람이 켜져 있으면 8:50에 알람
+            if (isFirstPeriodMove && !alarmOffFlags[0] && curTimeNum === 850) {
+                readingJournalAlarmFired = true;
+                fireAlertOverlay("📚 독서통장 쓰기 시간입니다!");
+                playAlarmSound('timer');
+            }
+            // 1교시가 일반 수업이면 8:55에 알람
+            else if ((!isFirstPeriodMove || alarmOffFlags[0]) && curTimeNum === 855) {
+                readingJournalAlarmFired = true;
+                fireAlertOverlay("📚 독서통장 쓰기 시간입니다!");
+                playAlarmSound('timer');
+            }
         }
 
         const isBreak1 = (curTimeNum >= 940 && curTimeNum < 950);
@@ -1477,6 +1500,7 @@ function importStudentData(event) {
                         <div class="roulette-pointer"></div>
                         <div class="roulette-center-cap"></div>
                         <canvas id="rouletteCanvas" width="320" height="320"></canvas>
+                        <div id="rouletteResultDisplay" style="display:none;"></div>
                         <br>
                         <button class="roulette-spin-btn" id="spinActionBtn" onclick="spinRouletteWheel()">✨ 돌리기 ✨</button>
                     </div>
@@ -1625,6 +1649,13 @@ function importStudentData(event) {
                 if (finalEvent.isLucky369) applyLucky369Effect();
                 saveTodayRoulette({ index: targetIndex, title: finalEvent.title, alert: finalEvent.alert, isLucky369: !!finalEvent.isLucky369 });
                 
+                // 결과를 모달에 표시
+                const resultDisplay = document.getElementById('rouletteResultDisplay');
+                if (resultDisplay) {
+                    resultDisplay.innerHTML = `<div style="font-size:2rem; margin:20px 0; padding:20px; background:${finalEvent.color}; color:white; border-radius:15px; text-align:center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">${finalEvent.title}</div>`;
+                    resultDisplay.style.display = 'block';
+                }
+                
                 // 초록색 칸(#4caf50)이면 도전 버튼 표시
                 if (finalEvent.color === "#4caf50") {
                     spinBtn.innerText = '🌈 슈퍼 찬스 도전하기!';
@@ -1637,8 +1668,10 @@ function importStudentData(event) {
                 markRouletteComplete(finalEvent);
                 isWheelSpinning = false;
                 spinBtn.disabled = false;
-                spinBtn.innerText = '✨ 돌리기 ✨';
-                closeRouletteModal();
+                spinBtn.innerText = '✖️ 닫기';
+                spinBtn.style.background = '#f44336';
+                spinBtn.onclick = closeRouletteModal;
+                // closeRouletteModal()을 자동으로 호출하지 않음 - 사용자가 직접 닫을 수 있도록
             }, 4100);
         }
 
