@@ -1230,7 +1230,6 @@ card.innerHTML = `
                 }
             }
             else if (diff === 0) {
-                fullAlert.style.display = 'none';
                 miniTimer.style.display = 'none';
                 mainAlarmMsg.innerText = '';
                 document.getElementById('bigAlert').style.display = 'flex'; 
