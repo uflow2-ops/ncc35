@@ -2,12 +2,10 @@ const NEIS_API_KEY = CLASS_CONFIG.neisApiKey;
 const DAHANDIN_API_KEY = CLASS_CONFIG.dahandinApiKey;
 const WEATHER_KEY = CLASS_CONFIG.weatherKey;
 
-// 개인 정보 보호를 위해 studentData는 localStorage에서 먼저 로드합니다.
-// localStorage에 없으면 CLASS_CONFIG.studentData (이제 빈 배열)를 사용합니다.
 CLASS_CONFIG.studentData = JSON.parse(localStorage.getItem('studentData_v1')) || CLASS_CONFIG.studentData;
-const { studentData, subjects, subIcons, defaultMarqueeMsg, school, weatherGrid, alarmSoundUrl } = CLASS_CONFIG; // 이제 studentData는 로드된 값 또는 빈 배열
+const { studentData, subjects, subIcons, defaultMarqueeMsg, school, weatherGrid, alarmSoundUrl } = CLASS_CONFIG;
 const { bugPool, wheelItems } = CLASS_DATA;
-const STUDENT_COUNT = studentData.length; // studentData가 로드된 후 길이를 계산
+const STUDENT_COUNT = studentData.length;
 
 let viewDate = new Date();
         let weeklyTT = JSON.parse(localStorage.getItem('weeklyTT_v7')) || { "월": Array(6).fill().map(()=>({s:"-", m:false})), "화": Array(6).fill().map(()=>({s:"-", m:false})), "수": Array(6).fill().map(()=>({s:"-", m:false})), "목": Array(6).fill().map(()=>({s:"-", m:false})), "금": Array(6).fill().map(()=>({s:"-", m:false})) };
@@ -43,20 +41,20 @@ let viewDate = new Date();
         let creativeMemoEditIdx = null;
         let soundSettings = JSON.parse(localStorage.getItem('soundSettings_v1')) || { volume: 0.7, bell: true, timer: true, celebration: true, tick: true };
         let marqueeRestoreTimer = null;
-        let lastDismissedAlarmIdx = -1; // 사용자가 수동으로 닫은 알람의 인덱스 저장
-        let currentAlarmIdx = -1;      // 현재 추적 중인 가장 가까운 알람 인덱스
-        let weatherWarningMsg = "";    // 기상 특보 메시지 저장용
+        let lastDismissedAlarmIdx = -1;
+        let currentAlarmIdx = -1;
+        let weatherWarningMsg = "";
         let notepadContent = localStorage.getItem('notepad_v1') || "";
 
-        // 소음 관리 변수
         let noiseStream = null, noiseAnalyser = null, noiseDataArray = null;
-        let noiseStrikes = 0;          // 경고 누적 횟수
-        let noiseHighStartTime = 0;    // 소음이 기준치를 넘기 시작한 시간
+        let noiseStrikes = 0;
+        let noiseHighStartTime = 0;
         let isNoiseMonitoring = false;
-        let noiseThreshold = parseInt(localStorage.getItem('noiseThreshold_v1')) || 55; // 소음 기준치
+        let noiseThreshold = parseInt(localStorage.getItem('noiseThreshold_v1')) || 55;
 
         let lunchAutoOpened = false;
         let lunchResultShown = false;
+        let rouletteAutoOpened = false;
         const STORAGE_KEY = '3_5_science_garden_v2';
 
         let gameData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
@@ -65,11 +63,8 @@ let viewDate = new Date();
         let cookieEarnDates = JSON.parse(localStorage.getItem('cookieEarnDates_v1')) || {};
         let isFirstSync = true;
 
-        // --- 틱 사운드용 오디오 컨텍스트 (브라우저 내장) ---
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let lastTickSecond = -1;
-
-        // 브라우저 정책 준수: 사용자 첫 클릭 시 오디오 컨텍스트 재개
         document.addEventListener('click', () => {
             if (audioCtx.state === 'suspended') audioCtx.resume();
         }, { once: true });
@@ -114,7 +109,6 @@ let viewDate = new Date();
             document.getElementById('sound-celebration').checked = soundSettings.celebration;
             document.getElementById('sound-tick').checked = soundSettings.tick;
 
-            // 소음 기준치 UI 동적 추가 (이미 존재하지 않는 경우에만)
             const settingsContainer = document.querySelector('.sound-settings');
             if (settingsContainer && !document.getElementById('noise-threshold-input')) {
                 const html = `
@@ -254,7 +248,7 @@ let viewDate = new Date();
             document.getElementById('alarmSound').src = alarmSoundUrl;
             applySoundVolume();
             setupRouletteUI();
-            setupNoiseElements(); // 소음 UI 요소 생성
+            setupNoiseElements();
             restoreRouletteState();
             renderAll(); fetchWeather(); fetchMeal(); drawGardenBackground(); syncCookies();
             setInterval(function() {
@@ -334,13 +328,11 @@ let viewDate = new Date();
                         const current = res.data.totalCookie;
                         const todayStr = new Date().toLocaleDateString('sv-SE');
                         
-                        // ✨ 쿠키가 예전보다 늘어났다면 현재 시간(밀리초) 기록!
                         if(prevTotals[s.code] !== undefined && current > prevTotals[s.code]) { 
                             if(!isFirstSync) earners.push(s.name); 
                             cookieEarnDates[s.code] = Date.now();
                             localStorage.setItem('cookieEarnDates_v1', JSON.stringify(cookieEarnDates));
                         } else if (prevTotals[s.code] === undefined) {
-                            // 처음 켰을 때 다 굶어 죽어있으면 슬프니까 지금 먹은 걸로 초기 셋팅
                             cookieEarnDates[s.code] = Date.now();
                             localStorage.setItem('cookieEarnDates_v1', JSON.stringify(cookieEarnDates));
                         }
@@ -359,17 +351,14 @@ let viewDate = new Date();
             const pile = document.getElementById('cookie-pile');
             pile.style.height = pct + '%'; 
             
-            // 입체적인 쿠키 쌓기 연출 (옆면 및 다양한 각도)
             let cookiesHtml = '';
             const cookieCount = Math.floor(pct / 1.5); 
             for(let i=0; i<cookieCount; i++) {
-                const rotateZ = (Math.random() * 360).toFixed(1); // 무작위 회전
-                const skew = (Math.random() * 20 - 10).toFixed(1); // 약간의 뒤틀림
-                const shiftX = (Math.random() * 20 - 10).toFixed(1); // 좌우 편차
-                
-                // 3D 효과: 일부는 정면, 일부는 옆면(납작하게) 보이도록 scaleY 조절
+                const rotateZ = (Math.random() * 360).toFixed(1);
+                const skew = (Math.random() * 20 - 10).toFixed(1);
+                const shiftX = (Math.random() * 20 - 10).toFixed(1);
                 const perspectiveScale = (0.3 + Math.random() * 0.7).toFixed(2);
-                const brightness = (0.8 + Math.random() * 0.4).toFixed(2); // 조명 차이
+                const brightness = (0.8 + Math.random() * 0.4).toFixed(2);
 
                 cookiesHtml += `<span style="display:inline-block; font-size:1.8rem; transform: rotateZ(${rotateZ}deg) scaleY(${perspectiveScale}) skew(${skew}deg) translateX(${shiftX}px); margin:-8px; filter: brightness(${brightness}) drop-shadow(2px 3px 2px rgba(0,0,0,0.4));">🍪</span>`;
             }
@@ -385,7 +374,6 @@ let viewDate = new Date();
 
         function exportAllData() { 
             let exportObj = {};
-            // 특정 키만 가져오는 대신 localStorage의 모든 데이터를 수집 (급식 투표 데이터 포함)
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 exportObj[key] = localStorage.getItem(key);
@@ -409,90 +397,100 @@ let viewDate = new Date();
     function checkDateTransition(now) {
         const currentDay = now.getDate();
         if (currentDay !== lastCheckedDay) {
-            // 실제 날짜가 바뀌었을 때 (자정 경과)
             lastCheckedDay = currentDay;
             routineDismissed = { morning: false, break1: false };
-            readingJournalAlarmFired = false; // 독서통장 알람 초기화
+            readingJournalAlarmFired = false;
             lunchAutoOpened = false;
             lunchResultShown = false;
-            lastDismissedAlarmIdx = -1; // 알람 닫기 기록 초기화
-            
-            viewDate = new Date(now); // 화면의 기준 날짜를 새로운 '오늘'로 업데이트
+            rouletteAutoOpened = false;
+            lastDismissedAlarmIdx = -1;
+            viewDate = new Date(now);
             renderAll();
             fetchMeal();
             fetchWeather();
-            restoreRouletteState(); // 룰렛 및 전광판 메시지 초기화
+            restoreRouletteState();
         }
     }
-    function checkRoutines(now) {
-        const curTimeNum = now.getHours() * 100 + now.getMinutes();
-        const isMorning = (curTimeNum >= 830 && curTimeNum < 900);
+        function checkRoutines(now) {
+            const curTimeNum = now.getHours() * 100 + now.getMinutes();
+            const isMorning = (curTimeNum >= 830 && curTimeNum < 900);
 
-        // [모든 쉬는 시간 감지] 수업 시작 10분 전 및 점심 시간(12:10~13:00)
-        let isAnyBreak = isMorning;
-        classTimes.forEach(timeStr => {
-            const [h, m] = timeStr.split(':').map(Number);
-            const targetTimeNum = h * 100 + m;
-            let sh = h, sm = m - 10;
-            if (sm < 0) { sh--; sm += 60; }
-            const startTimeNum = sh * 100 + sm;
-            
-            if (timeStr === "13:00") { // 점심 시간 특별 연장
-                if (curTimeNum >= 1210 && curTimeNum < 1300) isAnyBreak = true;
-            } else if (curTimeNum >= startTimeNum && curTimeNum < targetTimeNum) {
-                isAnyBreak = true;
+            let isAnyBreak = isMorning;
+            classTimes.forEach(timeStr => {
+                const [h, m] = timeStr.split(':').map(Number);
+                const targetTimeNum = h * 100 + m;
+                let sh = h, sm = m - 10;
+                if (sm < 0) { sh--; sm += 60; }
+                const startTimeNum = sh * 100 + sm;
+                
+                if (timeStr === "13:00") {
+                    if (curTimeNum >= 1210 && curTimeNum < 1300) isAnyBreak = true;
+                } else if (curTimeNum >= startTimeNum && curTimeNum < targetTimeNum) {
+                    isAnyBreak = true;
+                }
+            });
+
+            if (isAnyBreak) {
+                if (!isNoiseMonitoring) startNoiseMonitoring();
+            } else {
+                const manualBtn = document.getElementById('manualNoiseBtn');
+                if (isNoiseMonitoring && (!manualBtn || !manualBtn.innerText.includes('중지'))) {
+                    stopNoiseMonitoring();
+                }
             }
-        });
 
-        // 소음 측정기 자동 제어 (수동으로 켠 게 아닐 때만 자동 종료)
-        if (isAnyBreak) {
-            if (!isNoiseMonitoring) startNoiseMonitoring();
-        } else {
-            const manualBtn = document.getElementById('manualNoiseBtn');
-            if (isNoiseMonitoring && (!manualBtn || !manualBtn.innerText.includes('중지'))) {
-                stopNoiseMonitoring();
+            if (isMorning) { 
+                if (!routineDismissed.morning && !document.getElementById('routineBanner').classList.contains('show')) {
+                    showRoutineBanner("🌅 아침 활동 안내", routineMsgs.morning, 'morning');
+                } 
+            } else if (curTimeNum === 900 && currentActiveRoutineType === 'morning') {
+                closeRoutineBanner();
+            }
+
+            if (!readingJournalAlarmFired) {
+                const dName = ["일","월","화","수","목","금","토"][viewDate.getDay()];
+                const todayTT = temporaryTT[viewDate.toLocaleDateString('sv-SE')] || weeklyTT[dName];
+                const isFirstPeriodMove = todayTT && todayTT[0] && todayTT[0].m;
+                
+                if (isFirstPeriodMove && !alarmOffFlags[0] && curTimeNum === 850) {
+                    readingJournalAlarmFired = true;
+                    fireAlertOverlay("📚 독서통장 쓰기 시간입니다!");
+                    playAlarmSound('timer');
+                }
+                else if ((!isFirstPeriodMove || alarmOffFlags[0]) && curTimeNum === 855) {
+                    readingJournalAlarmFired = true;
+                    fireAlertOverlay("📚 독서통장 쓰기 시간입니다!");
+                    playAlarmSound('timer');
+                }
+            }
+
+            const isBreak1 = (curTimeNum >= 940 && curTimeNum < 950);
+            if (isBreak1) { 
+                if (!routineDismissed.break1 && !document.getElementById('routineBanner').classList.contains('show')) {
+                    showRoutineBanner("🥛 1교시 쉬는시간", routineMsgs.break1, 'break1');
+                }
+            } else if (curTimeNum === 950 && currentActiveRoutineType === 'break1') {
+                closeRoutineBanner();
+            }
+
+            if (!rouletteAutoOpened && !getTodayRoulette() && classTimes.length > 0) {
+                const firstClassTime = classTimes[0];
+                const [firstH, firstM] = firstClassTime.split(':').map(Number);
+                const firstClassMin = firstH * 60 + firstM;
+                const currentMin = now.getHours() * 60 + now.getMinutes();
+                const currentSec = now.getSeconds();
+                
+                if (currentMin === firstClassMin - 1 && currentSec === 0) {
+                    rouletteAutoOpened = true;
+                    openRouletteModal();
+                    setTimeout(() => {
+                        if (!isWheelSpinning && !getTodayRoulette()) {
+                            spinRouletteWheel();
+                        }
+                    }, 500);
+                }
             }
         }
-
-        // 안내 배너 로직
-        if (isMorning) { 
-            if (!routineDismissed.morning && !document.getElementById('routineBanner').classList.contains('show')) {
-                showRoutineBanner("🌅 아침 활동 안내", routineMsgs.morning, 'morning');
-            } 
-        } else if (curTimeNum === 900 && currentActiveRoutineType === 'morning') {
-            closeRoutineBanner();
-        }
-
-        // 독서통장 쓰기 알람
-        // 1교시가 이동 수업이면 10분 전(8:50)에, 일반 수업이면 5분 전(8:55)에 알람
-        if (!readingJournalAlarmFired) {
-            const dName = ["일","월","화","수","목","금","토"][viewDate.getDay()];
-            const todayTT = temporaryTT[viewDate.toLocaleDateString('sv-SE')] || weeklyTT[dName];
-            const isFirstPeriodMove = todayTT && todayTT[0] && todayTT[0].m;
-            
-            // 1교시가 이동 수업이고 알람이 켜져 있으면 8:50에 알람
-            if (isFirstPeriodMove && !alarmOffFlags[0] && curTimeNum === 850) {
-                readingJournalAlarmFired = true;
-                fireAlertOverlay("📚 독서통장 쓰기 시간입니다!");
-                playAlarmSound('timer');
-            }
-            // 1교시가 일반 수업이면 8:55에 알람
-            else if ((!isFirstPeriodMove || alarmOffFlags[0]) && curTimeNum === 855) {
-                readingJournalAlarmFired = true;
-                fireAlertOverlay("📚 독서통장 쓰기 시간입니다!");
-                playAlarmSound('timer');
-            }
-        }
-
-        const isBreak1 = (curTimeNum >= 940 && curTimeNum < 950);
-        if (isBreak1) { 
-            if (!routineDismissed.break1 && !document.getElementById('routineBanner').classList.contains('show')) {
-                showRoutineBanner("🥛 1교시 쉬는시간", routineMsgs.break1, 'break1');
-            }
-        } else if (curTimeNum === 950 && currentActiveRoutineType === 'break1') {
-            closeRoutineBanner();
-        }
-    }
 
     function setupNoiseElements() {
         const widget = `
@@ -874,25 +872,21 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
         const canEvo = totalCount >= targetAbsolute; 
         let currentCookies = totalCount % 100;
 
-        // ⭐ 학생 고유 번호를 활용한 랜덤값 생성
         let hash = 0; 
         for(let i=0; i<s.code.length; i++) hash = s.code.charCodeAt(i) + ((hash << 5) - hash); 
 
-        // 1. 크기 랜덤 (35 ~ 55px 사이)
         let randomSize = 35 + (Math.abs(hash) % 21);
         
-        // 2. 색상 랜덤 팔레트 (f:기본색상, s:기본테두리 / ef:80개돌파 눈부신색상, es:눈부신테두리)
         const palettes = [
-            { f: "#aed581", s: "#558b2f", ef: "#ccff90", es: "#64dd17" }, // 초록 -> 네온초록
-            { f: "#f48fb1", s: "#ad1457", ef: "#ff80ab", es: "#c51162" }, // 분홍 -> 핫핑크
-            { f: "#81d4fa", s: "#0277bd", ef: "#84ffff", es: "#00b8d4" }, // 파랑 -> 빛나는하늘색
-            { f: "#ce93d8", s: "#6a1b9a", ef: "#e040fb", es: "#aa00ff" }, // 보라 -> 네온보라
-            { f: "#ffcc80", s: "#ef6c00", ef: "#ffd54f", es: "#ff9800" }, // 주황 -> 황금빛
-            { f: "#fff59d", s: "#f57f17", ef: "#ffff00", es: "#ffea00" }  // 연노랑 -> 쨍한노랑
+            { f: "#aed581", s: "#558b2f", ef: "#ccff90", es: "#64dd17" },
+            { f: "#f48fb1", s: "#ad1457", ef: "#ff80ab", es: "#c51162" },
+            { f: "#81d4fa", s: "#0277bd", ef: "#84ffff", es: "#00b8d4" },
+            { f: "#ce93d8", s: "#6a1b9a", ef: "#e040fb", es: "#aa00ff" },
+            { f: "#ffcc80", s: "#ef6c00", ef: "#ffd54f", es: "#ff9800" },
+            { f: "#fff59d", s: "#f57f17", ef: "#ffff00", es: "#ffea00" }
         ];
         let c = palettes[Math.abs(hash) % palettes.length];
 
-        // ⭐ 학생만을 위한 맞춤형 크기+색상의 번데기 그림 동적 생성!
         let myPupa = `<svg viewBox="0 0 100 100" width="${randomSize}" height="${randomSize}"><path d="M50 10 C65 25, 75 55, 50 90 C25 55, 35 25, 50 10 Z" fill="${c.f}" stroke="${c.s}" stroke-width="4"/><path d="M35 35 Q50 45 65 35 M30 55 Q50 65 70 55 M35 75 Q50 85 65 75" fill="none" stroke="${c.s}" stroke-width="3" opacity="0.6"/></svg>`;
         
         let myEvoPupa = `<svg viewBox="0 0 100 100" width="${randomSize}" height="${randomSize}"><path d="M50 10 C65 25, 75 55, 50 90 C25 55, 35 25, 50 10 Z" fill="${c.ef}" stroke="${c.es}" stroke-width="4"/><path d="M35 35 Q50 45 65 35 M30 55 Q50 65 70 55 M35 75 Q50 85 65 75" fill="none" stroke="${c.es}" stroke-width="3" opacity="0.6"/></svg>`;
@@ -910,15 +904,12 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
             }
         } else if (rem < 90) {
             if (currentCookies >= 80) {
-                // 부화 직전: 맞춤 크기 + 빛나는 진화 색상 + 파르르 떨림
                 iconHtml = `<span class="pupa-shiver" style="display:inline-block;">${myEvoPupa}</span>`;
             } else {
-                // 일반 번데기: 맞춤 크기 + 기본 색상
                 iconHtml = myPupa;
             }
        } else {
             if (data.currentBug) {
-                // 쿠키 95개 이상이면 화면 전체를 날아다니는 'fly-all-over' 적용!
                 const isReady = currentCookies >= 95 ? 'fly-all-over' : '';
                 iconHtml = `<span class="${isReady}" style="display:inline-block; ${data.currentBug.css || ''}">${data.currentBug.icon}</span>`;
             } else {
@@ -926,28 +917,23 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
             }
         }
 
-        // ✨ 배고픔 & 하트 검사 로직 (시간 기반)
         const nowMs = Date.now();
-        const oneHour = 60 * 60 * 1000;       // 1시간
-        const twoDays = 48 * 60 * 60 * 1000;  // 2일
+        const oneHour = 60 * 60 * 1000;
+        const twoDays = 48 * 60 * 60 * 1000;
         
-        // 🚨 기존에 날짜(문자열)로 저장된 데이터가 있거나 아예 없다면 현재 시간(숫자)으로 덮어씌움 (먹통 방지)
         if (!cookieEarnDates[s.code] || typeof cookieEarnDates[s.code] === 'string') {
             cookieEarnDates[s.code] = nowMs;
             localStorage.setItem('cookieEarnDates_v1', JSON.stringify(cookieEarnDates));
         }
         
-        // 1. 배고픔 판별 (2일 경과)
         let isHungry = (nowMs - cookieEarnDates[s.code] > twoDays);
         let hungryHtml = isHungry ? `<div class="hungry-bubble">🍪?</div>` : ''; 
 
-        // 2. 하트 판별 (1시간 이내)
         let happyHtml = '';
         if (!isHungry && (nowMs - cookieEarnDates[s.code] < oneHour)) {
             happyHtml = `<div class="happy-heart">❤️</div>`;
         }
 
-        // 최종 아이콘 출력
         let statusHtml = isHungry ? hungryHtml : happyHtml;
         const card = document.createElement('div'); 
         card.className = `cookie-individual ${canEvo ? 'can-evolve' : ''}`; 
@@ -982,21 +968,19 @@ card.innerHTML = `
         }
 
         function applySuperChance() {
-            const increments = {}; // 각 학생별 증가량을 저장
+            const increments = {};
             studentData.forEach(s => {
                 const data = gameData[s.code];
                 if (!data) return;
 
                 const oldTotal = data.ackTotal;
-                // 1의 자리를 0으로 만들고 십의 자리를 하나 올림 (예: 23 -> 30, 20 -> 30)
                 let nextMilestone = (Math.floor(data.ackTotal / 10) + 1) * 10;
                 
-                increments[s.code] = nextMilestone - oldTotal; // 증가량 계산
+                increments[s.code] = nextMilestone - oldTotal;
 
                 data.ackTotal = nextMilestone;
                 const finalRem = nextMilestone % 100;
 
-                // 진화 로직 적용 (번데기->나비 획득, 나비->정원 이동)
                 if (finalRem === 90 && !data.currentBug) {
                     data.currentBug = bugPool[Math.floor(Math.random() * bugPool.length)];
                 } else if (finalRem === 0) {
@@ -1008,9 +992,8 @@ card.innerHTML = `
             localStorage.setItem(STORAGE_KEY, JSON.stringify(gameData));
             renderBugGrid(); renderGarden();
 
-            spawnSuperConfetti(); // 슈퍼 찬스 전용 황금 폭죽 실행
+            spawnSuperConfetti();
 
-            // 시각 효과: 렌더링된 카드들을 찾아 숫자 애니메이션 추가
             const cards = document.querySelectorAll('.cookie-individual');
             studentData.forEach((s, idx) => {
                 const card = cards[idx];
@@ -1209,7 +1192,6 @@ card.innerHTML = `
                 }
             });
 
-            // 현재 계산된 가장 가까운 알람 인덱스를 전역 변수에 저장 (닫기 버튼 클릭 시 참조용)
             currentAlarmIdx = nearestIdx;
 
             if (nearestIdx === -1) {
@@ -1264,7 +1246,6 @@ card.innerHTML = `
         function dismissAlarm() { document.getElementById('bigAlert').style.display = 'none'; document.getElementById('alarmSound').pause(); }
         function dismissFullScreenAlert() { 
             document.getElementById('full-screen-alert').style.display = 'none'; 
-            // 현재 알람 중인 교시를 '닫음' 상태로 기록하여 다시 뜨지 않게 함
             if (currentAlarmIdx !== -1) lastDismissedAlarmIdx = currentAlarmIdx;
         }
         function toggleDahand(show) { const l = document.getElementById('dahandLayer'); if(show){ l.classList.add('show'); document.getElementById('dahandFrame').src="https://dahandin.com/"; } else l.classList.remove('show'); }
