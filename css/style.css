@@ -60,8 +60,14 @@
         #meal-list {display: block;  width: 100%;  white-space: nowrap;    overflow: hidden;   text-overflow: ellipsis; }
         #weather-info { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
 
-        .big-alert-overlay { display: none; position: fixed; inset: 0; background: rgba(255, 0, 0, 0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: white; text-align: center; }
-        .dismiss-btn { position: absolute; top: 30px; right: 40px; background: none; border: none; color: white; font-size: 7rem; cursor: pointer; }
+        .big-alert-overlay { display: none; position: fixed; inset: 0; background: rgba(255, 0, 0, 0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: white; text-align: center; pointer-events: none; }
+        .big-alert-overlay .dismiss-btn { position: absolute; top: 30px; right: 40px; background: none; border: none; color: white; font-size: 7rem; cursor: pointer; pointer-events: auto; }
+        .big-alert-overlay #bigAlertText { pointer-events: none; }
+        
+        #full-screen-alert { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 138, 128, 0.95); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; color: white; font-size: 5rem; text-align: center; pointer-events: auto; }
+        #full-screen-alert .dismiss-btn { position: absolute; top: 30px; right: 40px; background: none; border: none; color: white; font-size: 7rem; cursor: pointer; pointer-events: auto; }
+        #full-screen-alert #alert-message { pointer-events: none; }
+        #full-screen-alert .timer-text { pointer-events: none; }
 
         .subject-item { display: flex; align-items: center; justify-content: center; gap: 20px; padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 2.3rem; cursor: pointer; width: 100%; border-radius: 15px; }
         .side-btn { width: 100%; border: none; padding: 12px; border-radius: 15px; font-family: 'Jua'; cursor: pointer; font-size: 22px; margin-top: 8px; transition: 0.2s; box-shadow: 0 4px 0 rgba(0,0,0,0.1); }
