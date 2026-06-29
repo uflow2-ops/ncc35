@@ -1649,6 +1649,15 @@ function importStudentData(event) {
             }
         }
         
+        function resetSuperChanceBonus() {
+            if (!confirm('슈퍼찬스 보너스를 초기화하시겠습니까?\n\n모든 학생의 슈퍼찬스 보너스가 삭제되고,\n다시 뽑기를 통해 슈퍼찬스에 당첨되어야 보너스를 받을 수 있습니다.')) return;
+            superChanceBonus = {};
+            localStorage.removeItem('superChanceBonus_v1');
+            syncCookies();
+            showMarqueeMessage('🔄 슈퍼찬스 보너스가 초기화되었습니다.', 5000);
+            alert('슈퍼찬스 보너스가 초기화되었습니다!');
+        }
+
         // 오늘 슈퍼찬스 당첨 보너스가 누락된 경우 복구
         function fixTodaySuperChanceIfNeeded() {
             const saved = getTodayRoulette();
