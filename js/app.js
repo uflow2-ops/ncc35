@@ -247,14 +247,15 @@ let viewDate = new Date();
             }
         }
 
-        function init() {
+        async function init() {
             document.getElementById('alarmSound').src = alarmSoundUrl;
             applySoundVolume();
             setupRouletteUI();
             setupNoiseElements();
             restoreRouletteState();
-            fixTodaySuperChanceIfNeeded(); // 오늘 슈퍼찬스 당첨 보너스 누락 복구
-            renderAll(); fetchWeather(); fetchMeal(); drawGardenBackground(); syncCookies();
+            await syncCookies(); // 먼저 쿠키 동기화 완료
+            renderAll(); fetchWeather(); fetchMeal(); drawGardenBackground();
+            fixTodaySuperChanceIfNeeded(); // syncCookies 이후에 실행하여 정확한 쿠키 수 기준으로 보너스 복구
             setInterval(function() {
                 const now = new Date();
                 checkDateTransition(now);
@@ -1660,7 +1661,11 @@ function importStudentData(event) {
                 return;
             }
             
-            // 먼저 최신 쿠키 데이터 동기화
+            // 먼저 보너스 초기화 (syncCookies 전에!)
+            superChanceBonus = {};
+            localStorage.removeItem('superChanceBonus_v1');
+            
+            // 최신 쿠키 데이터 동기화 (보너스 없이)
             await syncCookies();
             
             // gameData의 ackTotal을 실제 API 쿠키 수로 초기화 (보너스 제거)
@@ -1672,9 +1677,11 @@ function importStudentData(event) {
             });
             localStorage.setItem(STORAGE_KEY, JSON.stringify(gameData));
             
-            // 슈퍼찬스 보너스 초기화
-            superChanceBonus = {};
-            localStorage.removeItem('superChanceBonus_v1');
+            // 오늘의 뽑기 결과도 삭제 (다음 뽑기에서 새로 적용되도록)
+            localStorage.removeItem('roulette_daily_v1');
+            
+            // 초기화 플래그 설정 (다음 로드 시 fixTodaySuperChanceIfNeeded가 실행되지 않도록)
+            localStorage.setItem('superChanceReset_v1', 'true');
             
             const resetBtn = document.getElementById('superChanceResetBtn');
             if (resetBtn) resetBtn.style.display = 'none';
@@ -1692,6 +1699,12 @@ function importStudentData(event) {
         
         // 오늘 슈퍼찬스 당첨 보너스가 누락된 경우 복구
         function fixTodaySuperChanceIfNeeded() {
+            // 초기화 직후에는 보너스 복구를 스킵
+            if (localStorage.getItem('superChanceReset_v1')) {
+                localStorage.removeItem('superChanceReset_v1');
+                return;
+            }
+            
             const saved = getTodayRoulette();
             if (!saved) return; // 오늘 뽑기가 없으면 스킵
             
