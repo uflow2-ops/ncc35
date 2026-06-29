@@ -59,6 +59,7 @@ let viewDate = new Date();
 
         let gameData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
         let currentAPI_Totals = {};
+        let superChanceBonus = JSON.parse(localStorage.getItem('superChanceBonus_v1')) || {};
         
         let cookieEarnDates = JSON.parse(localStorage.getItem('cookieEarnDates_v1')) || {};
         let isFirstSync = true;
@@ -244,13 +245,52 @@ let viewDate = new Date();
             }
         }
 
+        // 오늘 슈퍼찬스 당첨 보너스가 누락된 경우 복구
+        function fixTodaySuperChanceIfNeeded() {
+            const saved = getTodayRoulette();
+            if (!saved) return; // 오늘 뽑기가 없으면 스킵
+            
+            // 초록색 이벤트(#4caf50)가 당첨되었는지 확인
+            const isSuperChanceEvent = saved.index >= 0 && saved.index < wheelItems.length && wheelItems[saved.index].color === "#4caf50";
+            if (!isSuperChanceEvent) return; // 슈퍼찬스 이벤트가 아니면 스킵
+            
+            // 이미 보너스가 적용되었는지 확인
+            const hasBonus = studentData.some(s => superChanceBonus[s.code] && superChanceBonus[s.code] > 0);
+            if (hasBonus) return; // 이미 보너스가 있으면 스킵
+            
+            // 보너스 계산 및 적용 (실제 증가분만 저장)
+            let needsFix = false;
+            studentData.forEach(s => {
+                const data = gameData[s.code];
+                if (!data) return;
+                
+                const oldTotal = data.ackTotal;
+                const nextMilestone = (Math.floor(oldTotal / 10) + 1) * 10;
+                const bonus = nextMilestone - oldTotal; // 실제 증가분 (1~10)
+                
+                if (bonus > 0) {
+                    superChanceBonus[s.code] = bonus; // 증가분만 저장
+                    needsFix = true;
+                }
+            });
+            
+            if (needsFix) {
+                localStorage.setItem('superChanceBonus_v1', JSON.stringify(superChanceBonus));
+                console.log('✅ 오늘 슈퍼찬스 보너스가 복구되었습니다.');
+                showMarqueeMessage('✅ 오늘 슈퍼찬스 보너스가 자동으로 적용되었습니다!', 5000);
+            }
+        }
+
         function init() {
             document.getElementById('alarmSound').src = alarmSoundUrl;
             applySoundVolume();
             setupRouletteUI();
             setupNoiseElements();
             restoreRouletteState();
+            fixSuperChanceBonusData(); // 잘못 저장된 보너스 데이터 수정
+            fixTodaySuperChanceIfNeeded(); // 오늘 슈퍼찬스 보너스 복구
             renderAll(); fetchWeather(); fetchMeal(); drawGardenBackground(); syncCookies();
+            
             setInterval(function() {
                 const now = new Date();
                 checkDateTransition(now);
@@ -337,7 +377,10 @@ let viewDate = new Date();
                             localStorage.setItem('cookieEarnDates_v1', JSON.stringify(cookieEarnDates));
                         }
                         
-                        prevTotals[s.code] = current; currentAPI_Totals[s.code] = current; grandTotal += current; 
+                        prevTotals[s.code] = current; 
+                        const bonus = superChanceBonus[s.code] || 0;
+                        currentAPI_Totals[s.code] = current + bonus; 
+                        grandTotal += (current + bonus); 
                     }
                 } catch(e) {}
             }));
@@ -979,6 +1022,11 @@ card.innerHTML = `
                 increments[s.code] = nextMilestone - oldTotal;
 
                 data.ackTotal = nextMilestone;
+                
+                // 증가분만 저장 (1~10)
+                superChanceBonus[s.code] = increments[s.code];
+                localStorage.setItem('superChanceBonus_v1', JSON.stringify(superChanceBonus));
+                
                 const finalRem = nextMilestone % 100;
 
                 if (finalRem === 90 && !data.currentBug) {
