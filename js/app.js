@@ -1655,16 +1655,30 @@ function importStudentData(event) {
             }
         }
         
-        function resetSuperChance() {
+        async function resetSuperChance() {
             if (!confirm('슈퍼찬스 보너스를 초기화하시겠습니까?\n\n모든 학생의 슈퍼찬스 보너스가 삭제되고,\n다음 뽑기에서 새로 적용됩니다.')) {
                 return;
             }
+            
+            // 먼저 최신 쿠키 데이터 동기화
+            await syncCookies();
+            
+            // gameData의 ackTotal을 실제 API 쿠키 수로 초기화 (보너스 제거)
+            studentData.forEach(s => {
+                if (gameData[s.code]) {
+                    const currentTotal = currentAPI_Totals[s.code] || 0;
+                    gameData[s.code].ackTotal = currentTotal;
+                }
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(gameData));
+            
+            // 슈퍼찬스 보너스 초기화
             superChanceBonus = {};
             localStorage.removeItem('superChanceBonus_v1');
+            
             const resetBtn = document.getElementById('superChanceResetBtn');
             if (resetBtn) resetBtn.style.display = 'none';
             showMarqueeMessage('🔄 슈퍼찬스 보너스가 초기화되었습니다.', 5000);
-            syncCookies();
         }
         
         function forceApplySuperChance() {
