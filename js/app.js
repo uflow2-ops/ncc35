@@ -253,6 +253,7 @@ let viewDate = new Date();
             setupRouletteUI();
             setupNoiseElements();
             restoreRouletteState();
+            fixTodaySuperChanceIfNeeded(); // 오늘 슈퍼찬스 당첨 보너스 누락 복구
             renderAll(); fetchWeather(); fetchMeal(); drawGardenBackground(); syncCookies();
             setInterval(function() {
                 const now = new Date();
@@ -1093,7 +1094,8 @@ card.innerHTML = `
             const predatorArea = document.getElementById('garden-predators');
             if (!predatorArea) return;
             predatorArea.innerHTML = '';
-            if (status.predator > 0 && status.herbivore > 0)                 const count = Math.min(3, status.predator);
+            if (status.predator > 0 && status.herbivore > 0) {
+                const count = Math.min(3, status.predator);
                 for (let i = 0; i < count; i++) {
                     const span = document.createElement('span');
                     span.className = 'predator-chase' + (i % 2 === 1 ? ' predator-two' : '');
@@ -1644,6 +1646,42 @@ function importStudentData(event) {
                 alert('🎰 오늘의 뽑기 결과\n\n' + saved.title + '\n\n📢 알림:\n' + saved.alert);
             } else {
                 alert('아직 오늘의 뽑기가 진행되지 않았습니다.\n대시보드에서 뽑기를 실행해주세요!');
+            }
+        }
+        
+        // 오늘 슈퍼찬스 당첨 보너스가 누락된 경우 복구
+        function fixTodaySuperChanceIfNeeded() {
+            const saved = getTodayRoulette();
+            if (!saved) return; // 오늘 뽑기가 없으면 스킵
+            
+            // 초록색 이벤트(#4caf50)가 당첨되었는지 확인
+            const isSuperChanceEvent = saved.index >= 0 && saved.index < wheelItems.length && wheelItems[saved.index].color === "#4caf50";
+            if (!isSuperChanceEvent) return; // 슈퍼찬스 이벤트가 아니면 스킵
+            
+            // 이미 보너스가 적용되었는지 확인
+            const hasBonus = studentData.some(s => superChanceBonus[s.code] && superChanceBonus[s.code] > 0);
+            if (hasBonus) return; // 이미 보너스가 있으면 스킵
+            
+            // 보너스 계산 및 적용
+            let needsFix = false;
+            studentData.forEach(s => {
+                const data = gameData[s.code];
+                if (!data) return;
+                
+                const oldTotal = data.ackTotal;
+                const nextMilestone = (Math.floor(oldTotal / 10) + 1) * 10;
+                const bonus = nextMilestone - oldTotal;
+                
+                if (bonus > 0) {
+                    superChanceBonus[s.code] = nextMilestone;
+                    needsFix = true;
+                }
+            });
+            
+            if (needsFix) {
+                localStorage.setItem('superChanceBonus_v1', JSON.stringify(superChanceBonus));
+                console.log('✅ 오늘 슈퍼찬스 보너스가 복구되었습니다.');
+                showMarqueeMessage('✅ 오늘 슈퍼찬스 보너스가 자동으로 적용되었습니다!', 5000);
             }
         }
 
