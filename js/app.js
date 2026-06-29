@@ -1647,8 +1647,10 @@ function importStudentData(event) {
             const forceBtn = document.getElementById('forceSuperChanceBtn');
             if (saved) {
                 alert('🎰 오늘의 뽑기 결과\n\n' + saved.title + '\n\n📢 알림:\n' + saved.alert);
-                if (resetBtn) resetBtn.style.display = 'block';
-                if (forceBtn) forceBtn.style.display = 'block';
+                // 슈퍼찬스(초록색) 이벤트일 때만 버튼 표시
+                const isSuperChance = saved.index >= 0 && saved.index < wheelItems.length && wheelItems[saved.index].color === "#4caf50";
+                if (resetBtn) resetBtn.style.display = isSuperChance ? 'block' : 'none';
+                if (forceBtn) forceBtn.style.display = isSuperChance ? 'block' : 'none';
             } else {
                 alert('아직 오늘의 뽑기가 진행되지 않았습니다.\n대시보드에서 뽑기를 실행해주세요!');
                 if (resetBtn) resetBtn.style.display = 'none';
@@ -1657,6 +1659,11 @@ function importStudentData(event) {
         }
         
         async function resetSuperChance() {
+            const pwd = prompt('슈퍼찬스 초기화를 위해 비밀번호를 입력하세요.');
+            if (pwd !== '369369') {
+                alert('비밀번호가 틀렸습니다.');
+                return;
+            }
             if (!confirm('슈퍼찬스 보너스를 초기화하시겠습니까?\n\n모든 학생의 슈퍼찬스 보너스가 삭제되고,\n다음 뽑기에서 새로 적용됩니다.')) {
                 return;
             }
@@ -1689,6 +1696,11 @@ function importStudentData(event) {
         }
         
         function forceApplySuperChance() {
+            const pwd = prompt('슈퍼찬스 강제 적용을 위해 비밀번호를 입력하세요.');
+            if (pwd !== '369369') {
+                alert('비밀번호가 틀렸습니다.');
+                return;
+            }
             if (!confirm('슈퍼찬스를 강제로 적용하시겠습니까?\n\n모든 학생의 쿠키가 다음 10의 자리로 올림됩니다.\n예: 1→10, 35→40, 91→100')) {
                 return;
             }
