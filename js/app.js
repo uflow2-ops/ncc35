@@ -187,10 +187,10 @@ let viewDate = new Date();
         function markRouletteComplete(saved) {
             const sideBtn = document.getElementById('eventRouletteBtn');
             if (!sideBtn) return;
-            sideBtn.innerText = '✅ 오늘 뽑기 완료';
-            sideBtn.style.background = '#4caf50';
-            sideBtn.style.boxShadow = '0 4px 0 #388e3c';
-            sideBtn.onclick = function() { showMarqueeMessage(saved.alert, 0); };
+            sideBtn.innerText = '🎰 오늘 뽑기 확인';
+            sideBtn.style.background = '#9c27b0';
+            sideBtn.style.boxShadow = '0 4px 0 #6a1b9a';
+            sideBtn.onclick = checkTodayDraw;
         }
         function restoreRouletteState() {
             const saved = getTodayRoulette();
@@ -209,7 +209,6 @@ let viewDate = new Date();
                 markRouletteComplete(saved);
                 if (saved.isLucky369) applyLucky369Effect();
             }
-            updateCheckTodayDrawBtn();
         }
         function showGoalCelebration(total) {
             const overlay = document.getElementById('goalCelebration');
@@ -1646,7 +1645,6 @@ function importStudentData(event) {
             const saved = getTodayRoulette();
             const resetBtn = document.getElementById('superChanceResetBtn');
             const forceBtn = document.getElementById('forceSuperChanceBtn');
-            const checkBtn = document.getElementById('checkTodayDrawBtn');
             if (saved) {
                 alert('🎰 오늘의 뽑기 결과\n\n' + saved.title + '\n\n📢 알림:\n' + saved.alert);
                 if (resetBtn) resetBtn.style.display = 'block';
@@ -1655,13 +1653,6 @@ function importStudentData(event) {
                 alert('아직 오늘의 뽑기가 진행되지 않았습니다.\n대시보드에서 뽑기를 실행해주세요!');
                 if (resetBtn) resetBtn.style.display = 'none';
                 if (forceBtn) forceBtn.style.display = 'none';
-            }
-        }
-        function updateCheckTodayDrawBtn() {
-            const checkBtn = document.getElementById('checkTodayDrawBtn');
-            const saved = getTodayRoulette();
-            if (checkBtn) {
-                checkBtn.style.display = saved ? 'block' : 'none';
             }
         }
         
@@ -1786,7 +1777,6 @@ function importStudentData(event) {
                 }
 
                 markRouletteComplete(finalEvent);
-                updateCheckTodayDrawBtn();
                 isWheelSpinning = false;
                 spinBtn.disabled = false;
                 spinBtn.innerText = '✖️ 닫기';
