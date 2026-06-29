@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오늘의 뽑기 확인</title>
+    <style>
+        body {
+            font-family: 'Jua', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+        .result-box {
+            background: #f5f5f5;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        .result-title {
+            font-size: 1.8rem;
+            color: #1976d2;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .result-content {
+            font-size: 1.3rem;
+            color: #555;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        .no-result {
+            text-align: center;
+            color: #999;
+            font-size: 1.5rem;
+            padding: 40px;
+        }
+        .date-info {
+            text-align: center;
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+        .icon {
+            font-size: 4rem;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎰 오늘의 뽑기 확인</h1>
+        <div class="date-info" id="dateInfo"></div>
+        <div id="resultArea"></div>
+    </div>
+
+    <script>
+        function toLocalDateStr(d) {
+            return d.getFullYear() + '-' + 
+                   (d.getMonth() + 1).toString().padStart(2, '0') + '-' + 
+                   d.getDate().toString().padStart(2, '0');
+        }
+
+        function getTodayRoulette() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('roulette_daily_v1') || 'null');
+                if (saved && saved.date === toLocalDateStr(new Date())) return saved;
+            } catch (e) {}
+            return null;
+        }
+
+        function displayResult() {
+            const today = new Date();
+            const dateStr = toLocalDateStr(today);
+            const dateInfo = document.getElementById('dateInfo');
+            const resultArea = document.getElementById('resultArea');
+            
+            dateInfo.textContent = `📅 오늘 날짜: ${today.toLocaleDateString('ko-KR', {year: 'numeric', month: 'long', day: 'numeric', weekday: 'long'})}`;
+            
+            const result = getTodayRoulette();
+            
+            if (result) {
+                resultArea.innerHTML = `
+                    <div class="result-box">
+                        <div class="icon">🎰</div>
+                        <div class="result-title">오늘의 이벤트 뽑기 완료!</div>
+                        <div class="result-content">${result.title}</div>
+                    </div>
+                    <div class="result-box" style="background: #fff3e0;">
+                        <div class="result-title" style="color: #ff9800;">📢 알림 메시지</div>
+                        <div class="result-content">${result.alert}</div>
+                    </div>
+                `;
+            } else {
+                resultArea.innerHTML = `
+                    <div class="result-box">
+                        <div class="no-result">
+                            <div class="icon">😊</div>
+                            아직 오늘의 뽑기가 진행되지 않았습니다.<br>
+                            대시보드에서 뽑기를 실행해주세요!
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        displayResult();
+    </script>
+</body>
+</html>

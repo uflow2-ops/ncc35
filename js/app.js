@@ -51,6 +51,8 @@ let viewDate = new Date();
         let noiseHighStartTime = 0;
         let isNoiseMonitoring = false;
         let noiseThreshold = parseInt(localStorage.getItem('noiseThreshold_v1')) || 55;
+        let noiseGain = parseFloat(localStorage.getItem('noiseGain_v1')) || 1.0;
+        let noiseDuration = parseInt(localStorage.getItem('noiseDuration_v1')) || 3;
 
         let lunchAutoOpened = false;
         let lunchResultShown = false;
@@ -59,6 +61,7 @@ let viewDate = new Date();
 
         let gameData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
         let currentAPI_Totals = {};
+        let superChanceBonus = JSON.parse(localStorage.getItem('superChanceBonus_v1')) || {};
         
         let cookieEarnDates = JSON.parse(localStorage.getItem('cookieEarnDates_v1')) || {};
         let isFirstSync = true;
@@ -337,7 +340,10 @@ let viewDate = new Date();
                             localStorage.setItem('cookieEarnDates_v1', JSON.stringify(cookieEarnDates));
                         }
                         
-                        prevTotals[s.code] = current; currentAPI_Totals[s.code] = current; grandTotal += current; 
+                        prevTotals[s.code] = current; 
+                        const bonus = superChanceBonus[s.code] || 0;
+                        currentAPI_Totals[s.code] = current + bonus; 
+                        grandTotal += (current + bonus); 
                     }
                 } catch(e) {}
             }));
@@ -979,6 +985,11 @@ card.innerHTML = `
                 increments[s.code] = nextMilestone - oldTotal;
 
                 data.ackTotal = nextMilestone;
+                
+                // 실제 쿠키 수도 함께 업데이트
+                if (!currentAPI_Totals[s.code]) currentAPI_Totals[s.code] = 0;
+                currentAPI_Totals[s.code] = nextMilestone;
+                
                 const finalRem = nextMilestone % 100;
 
                 if (finalRem === 90 && !data.currentBug) {
@@ -1082,8 +1093,7 @@ card.innerHTML = `
             const predatorArea = document.getElementById('garden-predators');
             if (!predatorArea) return;
             predatorArea.innerHTML = '';
-            if (status.predator > 0 && status.herbivore > 0) {
-                const count = Math.min(3, status.predator);
+            if (status.predator > 0 && status.herbivore > 0)                 const count = Math.min(3, status.predator);
                 for (let i = 0; i < count; i++) {
                     const span = document.createElement('span');
                     span.className = 'predator-chase' + (i % 2 === 1 ? ' predator-two' : '');
@@ -1554,12 +1564,32 @@ function importStudentData(event) {
                 setTimeout(() => {
                     applySuperChance();
                     document.getElementById('superChallengeOverlay').style.display = 'none';
+                    // 룰렛 상태 초기화
+                    isWheelSpinning = false;
+                    const spinBtn = document.getElementById('spinActionBtn');
+                    if (spinBtn) {
+                        spinBtn.disabled = false;
+                        spinBtn.innerText = '✖️ 닫기';
+                        spinBtn.style.background = '#f44336';
+                        spinBtn.onclick = closeRouletteModal;
+                    }
+                    closeRouletteModal();
                 }, 1500);
             } else {
                 resultSlot.innerHTML = '❌';
                 setTimeout(() => {
                     alert("아쉽습니다! 다음 기회에...");
                     document.getElementById('superChallengeOverlay').style.display = 'none';
+                    // 룰렛 상태 초기화
+                    isWheelSpinning = false;
+                    const spinBtn = document.getElementById('spinActionBtn');
+                    if (spinBtn) {
+                        spinBtn.disabled = false;
+                        spinBtn.innerText = '✖️ 닫기';
+                        spinBtn.style.background = '#f44336';
+                        spinBtn.onclick = closeRouletteModal;
+                    }
+                    closeRouletteModal();
                 }, 1000);
             }
         }
@@ -1607,6 +1637,14 @@ function importStudentData(event) {
         function closeRouletteModal() {
             if (isWheelSpinning) return;
             document.getElementById('rouletteOverlay').classList.remove('active');
+        }
+        function checkTodayDraw() {
+            const saved = getTodayRoulette();
+            if (saved) {
+                alert('🎰 오늘의 뽑기 결과\n\n' + saved.title + '\n\n📢 알림:\n' + saved.alert);
+            } else {
+                alert('아직 오늘의 뽑기가 진행되지 않았습니다.\n대시보드에서 뽑기를 실행해주세요!');
+            }
         }
 
         function spinRouletteWheel() {
