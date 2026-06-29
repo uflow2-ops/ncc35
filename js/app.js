@@ -1643,12 +1643,15 @@ function importStudentData(event) {
         function checkTodayDraw() {
             const saved = getTodayRoulette();
             const resetBtn = document.getElementById('superChanceResetBtn');
+            const forceBtn = document.getElementById('forceSuperChanceBtn');
             if (saved) {
                 alert('🎰 오늘의 뽑기 결과\n\n' + saved.title + '\n\n📢 알림:\n' + saved.alert);
                 if (resetBtn) resetBtn.style.display = 'block';
+                if (forceBtn) forceBtn.style.display = 'block';
             } else {
                 alert('아직 오늘의 뽑기가 진행되지 않았습니다.\n대시보드에서 뽑기를 실행해주세요!');
                 if (resetBtn) resetBtn.style.display = 'none';
+                if (forceBtn) forceBtn.style.display = 'none';
             }
         }
         
@@ -1662,6 +1665,15 @@ function importStudentData(event) {
             if (resetBtn) resetBtn.style.display = 'none';
             showMarqueeMessage('🔄 슈퍼찬스 보너스가 초기화되었습니다.', 5000);
             syncCookies();
+        }
+        
+        function forceApplySuperChance() {
+            if (!confirm('슈퍼찬스를 강제로 적용하시겠습니까?\n\n모든 학생의 쿠키가 다음 10의 자리로 올림됩니다.\n예: 1→10, 35→40, 91→100')) {
+                return;
+            }
+            applySuperChance();
+            const forceBtn = document.getElementById('forceSuperChanceBtn');
+            if (forceBtn) forceBtn.style.display = 'none';
         }
         
         // 오늘 슈퍼찬스 당첨 보너스가 누락된 경우 복구
