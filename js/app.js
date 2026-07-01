@@ -627,6 +627,15 @@ let viewDate = new Date();
             document.getElementById('break1-text').value = routineMsgs.break1; 
             document.getElementById('home-mission-text').value = homeMissionText;
             loadSoundSettingsUI();
+            
+            // 슈퍼찬스 버튼을 설정창에 표시
+            const superChanceArea = document.getElementById('super-chance-area');
+            if (superChanceArea) {
+                const saved = getTodayRoulette();
+                const isSuperChance = saved && saved.index >= 0 && saved.index < wheelItems.length && wheelItems[saved.index].color === "#4caf50";
+                superChanceArea.style.display = isSuperChance ? 'block' : 'none';
+            }
+            
             document.getElementById('routineConfigModal').style.display = 'flex'; 
         }
         function saveRoutineConfig() { 
@@ -1619,8 +1628,7 @@ function importStudentData(event) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(gameData));
             localStorage.removeItem('roulette_daily_v1');
             localStorage.setItem('superChanceReset_v1', 'true');
-            const resetBtn = document.getElementById('superChanceResetBtn');
-            if (resetBtn) resetBtn.style.display = 'none';
+            closeAllModals();
             showMarqueeMessage('🔄 슈퍼찬스 보너스가 초기화되었습니다.', 5000);
         }
         
@@ -1634,8 +1642,7 @@ function importStudentData(event) {
                 return;
             }
             applySuperChance();
-            const forceBtn = document.getElementById('forceSuperChanceBtn');
-            if (forceBtn) forceBtn.style.display = 'none';
+            closeAllModals();
         }
         
         function fixTodaySuperChanceIfNeeded() {
