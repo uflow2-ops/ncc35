@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿const CLASS_CONFIG = {
+﻿﻿const CLASS_CONFIG = {
     neisApiKey: '선생님의_나이스_API_키',
     dahandinApiKey: '선생님의_다했니_API_키',
     weatherKey: '선생님의_기상청_API_키',

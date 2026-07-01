@@ -447,7 +447,7 @@ let viewDate = new Date();
                 if (!routineDismissed.morning && !document.getElementById('routineBanner').classList.contains('show')) {
                     showRoutineBanner("🌅 아침 활동 안내", routineMsgs.morning, 'morning');
                 } 
-            } else if (curTimeNum === 900 && currentActiveRoutineType === 'morning') {
+            } else if (curTimeNum >= 900 && curTimeNum < 905 && currentActiveRoutineType === 'morning') {
                 closeRoutineBanner();
             }
 
@@ -455,8 +455,9 @@ let viewDate = new Date();
                 const dName = ["일","월","화","수","목","금","토"][viewDate.getDay()];
                 const todayTT = temporaryTT[viewDate.toLocaleDateString('sv-SE')] || weeklyTT[dName];
                 const isFirstPeriodMove = todayTT && todayTT[0] && todayTT[0].m;
-                const journalTime = (isFirstPeriodMove && !alarmOffFlags[0]) ? 850 : 855;
-                if (curTimeNum === journalTime) {
+                const journalStartTime = (isFirstPeriodMove && !alarmOffFlags[0]) ? 850 : 855;
+                const journalEndTime = (isFirstPeriodMove && !alarmOffFlags[0]) ? 855 : 900;
+                if (curTimeNum >= journalStartTime && curTimeNum < journalEndTime) {
                     readingJournalAlarmFired = true;
                     fireAlertOverlay("📚 독서통장 쓰기 시간입니다!");
                     playAlarmSound('timer');
@@ -468,7 +469,7 @@ let viewDate = new Date();
                 if (!routineDismissed.break1 && !document.getElementById('routineBanner').classList.contains('show')) {
                     showRoutineBanner("🥛 1교시 쉬는시간", routineMsgs.break1, 'break1');
                 }
-            } else if (curTimeNum === 950 && currentActiveRoutineType === 'break1') {
+            } else if (curTimeNum >= 950 && curTimeNum < 955 && currentActiveRoutineType === 'break1') {
                 closeRoutineBanner();
             }
 
@@ -983,6 +984,9 @@ card.innerHTML = `
                 data.ackTotal = nextMilestone;
                 if (!currentAPI_Totals[s.code]) currentAPI_Totals[s.code] = 0;
                 currentAPI_Totals[s.code] = nextMilestone;
+                // syncCookies()가 덮어쓰지 않도록 superChanceBonus에 저장
+                const actualAPI = parseInt(localStorage.getItem('prev_api_totals') ? JSON.parse(localStorage.getItem('prev_api_totals'))[s.code] : 0) || 0;
+                superChanceBonus[s.code] = nextMilestone - actualAPI;
                 const finalRem = nextMilestone % 100;
                 if (finalRem === 90 && !data.currentBug) {
                     data.currentBug = bugPool[Math.floor(Math.random() * bugPool.length)];
@@ -992,6 +996,7 @@ card.innerHTML = `
                     data.currentBug = null;
                 }
             });
+            localStorage.setItem('superChanceBonus_v1', JSON.stringify(superChanceBonus));
             localStorage.setItem(STORAGE_KEY, JSON.stringify(gameData));
             renderBugGrid(); renderGarden();
             spawnSuperConfetti();
@@ -1222,9 +1227,11 @@ card.innerHTML = `
             else if (diff === 0) {
                 miniTimer.style.display = 'none';
                 mainAlarmMsg.innerText = '';
-                document.getElementById('bigAlert').style.display = 'flex'; 
-                document.getElementById('bigAlertText').innerText = "수업 준비합시다!"; 
-                playAlarmSound('bell'); 
+                if (lastDismissedAlarmIdx !== nearestIdx) {
+                    document.getElementById('bigAlert').style.display = 'flex'; 
+                    document.getElementById('bigAlertText').innerText = "수업 준비합시다!"; 
+                    playAlarmSound('bell');
+                }
             }
         }
 
