@@ -171,7 +171,7 @@ let viewDate = new Date();
                     targetDiv.style.animation = 'luckySparkleBg 1.5s infinite ease-in-out';
                     targetDiv.style.color = '#d32f2f';
                     targetDiv.style.fontWeight = 'bold';
-                    if (!targetDiv.innerHTML.includes('✨')) targetDiv.innerHTML += ' ✨';
+                    if (!targetDiv.innerHTML.includes('✨')) targetDiv.innerHTML += ' <span style="display:inline;">✨</span>';
                 }
             });
         }
@@ -181,7 +181,7 @@ let viewDate = new Date();
                 div.style.background = '';
                 div.style.color = '';
                 div.style.fontWeight = '';
-                div.innerHTML = div.innerHTML.replace(' ✨', '');
+                div.innerHTML = div.innerHTML.replace(' <span style="display:inline;">✨</span>', '');
             });
         }
         function markRouletteComplete(saved) {
@@ -205,7 +205,7 @@ let viewDate = new Date();
                     sideBtn.onclick = openRouletteModal;
                 }
             } else {
-                document.getElementById('top-msg').innerHTML = saved.title;
+                document.getElementById('top-msg').innerHTML = escapeHtml(saved.title);
                 markRouletteComplete(saved);
                 if (saved.isLucky369) applyLucky369Effect();
             }
@@ -231,17 +231,17 @@ let viewDate = new Date();
             }
         }
         function spawnSuperConfetti() {
-            const colors = ['#FFD700', '#FFCC00', '#FFB300', '#F9A602', '#E6B800']; // 다양한 톤의 골드 컬러
+            const colors = ['#FFD700', '#FFCC00', '#FFB300', '#F9A602', '#E6B800'];
             const emojis = ['✨', '⭐', '💰', '👑', '📀', '💎'];
-            for (let i = 0; i < 120; i++) { // 120개로 대폭 증량
+            for (let i = 0; i < 120; i++) {
                 const el = document.createElement('div');
                 el.className = 'confetti-piece';
                 el.innerText = emojis[i % emojis.length];
                 el.style.color = colors[Math.floor(Math.random() * colors.length)];
                 el.style.left = Math.random() * 100 + 'vw';
-                el.style.fontSize = (Math.random() * 1.5 + 1.5) + 'rem'; // 크기 다양화
-                el.style.animationDuration = (Math.random() * 3 + 2) + 's'; // 낙하 속도 다양화
-                el.style.animationDelay = (Math.random() * 4) + 's'; // 쏟아지는 시간차
+                el.style.fontSize = (Math.random() * 1.5 + 1.5) + 'rem';
+                el.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                el.style.animationDelay = (Math.random() * 4) + 's';
                 document.body.appendChild(el);
                 setTimeout(function() { el.remove(); }, 6000);
             }
@@ -253,9 +253,9 @@ let viewDate = new Date();
             setupRouletteUI();
             setupNoiseElements();
             restoreRouletteState();
-            await syncCookies(); // 먼저 쿠키 동기화 완료
+            await syncCookies();
             renderAll(); fetchWeather(); fetchMeal(); drawGardenBackground();
-            fixTodaySuperChanceIfNeeded(); // syncCookies 이후에 실행하여 정확한 쿠키 수 기준으로 보너스 복구
+            fixTodaySuperChanceIfNeeded();
             setInterval(function() {
                 const now = new Date();
                 checkDateTransition(now);
@@ -314,7 +314,7 @@ let viewDate = new Date();
             clearInterval(homeInterval);
             if(show) {
                 l.classList.add('show');
-                mission.innerHTML = homeMissionText.replace(/\n/g, '<br>'); 
+                mission.innerHTML = escapeHtml(homeMissionText).replace(/\n/g, '<br>'); 
                 t.style.display = 'block'; mission.style.display = 'block'; stopS.style.display = 'none';
                 let c = 60; t.innerText = c;
                 homeInterval = setInterval(() => {
@@ -331,8 +331,6 @@ let viewDate = new Date();
                     const res = await (await fetch(`https://api.dahandin.com/openapi/v1/get/student/total?code=${s.code}`, { headers: {"X-API-Key": DAHANDIN_API_KEY} })).json();
                     if(res.result) { 
                         const current = res.data.totalCookie;
-                        const todayStr = new Date().toLocaleDateString('sv-SE');
-                        
                         if(prevTotals[s.code] !== undefined && current > prevTotals[s.code]) { 
                             if(!isFirstSync) earners.push(s.name); 
                             cookieEarnDates[s.code] = Date.now();
@@ -341,7 +339,6 @@ let viewDate = new Date();
                             cookieEarnDates[s.code] = Date.now();
                             localStorage.setItem('cookieEarnDates_v1', JSON.stringify(cookieEarnDates));
                         }
-                        
                         prevTotals[s.code] = current; 
                         const bonus = superChanceBonus[s.code] || 0;
                         currentAPI_Totals[s.code] = current + bonus; 
@@ -367,7 +364,6 @@ let viewDate = new Date();
                 const shiftX = (Math.random() * 20 - 10).toFixed(1);
                 const perspectiveScale = (0.3 + Math.random() * 0.7).toFixed(2);
                 const brightness = (0.8 + Math.random() * 0.4).toFixed(2);
-
                 cookiesHtml += `<span style="display:inline-block; font-size:1.8rem; transform: rotateZ(${rotateZ}deg) scaleY(${perspectiveScale}) skew(${skew}deg) translateX(${shiftX}px); margin:-8px; filter: brightness(${brightness}) drop-shadow(2px 3px 2px rgba(0,0,0,0.4));">🍪</span>`;
             }
             pile.innerHTML = cookiesHtml;
@@ -459,13 +455,8 @@ let viewDate = new Date();
                 const dName = ["일","월","화","수","목","금","토"][viewDate.getDay()];
                 const todayTT = temporaryTT[viewDate.toLocaleDateString('sv-SE')] || weeklyTT[dName];
                 const isFirstPeriodMove = todayTT && todayTT[0] && todayTT[0].m;
-                
-                if (isFirstPeriodMove && !alarmOffFlags[0] && curTimeNum === 850) {
-                    readingJournalAlarmFired = true;
-                    fireAlertOverlay("📚 독서통장 쓰기 시간입니다!");
-                    playAlarmSound('timer');
-                }
-                else if ((!isFirstPeriodMove || alarmOffFlags[0]) && curTimeNum === 855) {
+                const journalTime = (isFirstPeriodMove && !alarmOffFlags[0]) ? 850 : 855;
+                if (curTimeNum === journalTime) {
                     readingJournalAlarmFired = true;
                     fireAlertOverlay("📚 독서통장 쓰기 시간입니다!");
                     playAlarmSound('timer');
@@ -529,7 +520,7 @@ let viewDate = new Date();
                 const source = audioCtx.createMediaStreamSource(noiseStream);
                 noiseAnalyser = audioCtx.createAnalyser();
                 noiseAnalyser.fftSize = 256;
-                noiseAnalyser.smoothingTimeConstant = 0.9; // 소음 바의 움직임을 더 부드럽게 보정
+                noiseAnalyser.smoothingTimeConstant = 0.9;
                 source.connect(noiseAnalyser);
                 noiseDataArray = new Uint8Array(noiseAnalyser.frequencyBinCount);
                 isNoiseMonitoring = true;
@@ -569,7 +560,6 @@ let viewDate = new Date();
             noiseAnalyser.getByteFrequencyData(noiseDataArray);
             let avg = noiseDataArray.reduce((a, b) => a + b) / noiseDataArray.length;
 
-            // 소음 레벨 칸 채우기 시각화 (0~5단계)
             const level = Math.min(5, Math.floor((avg / noiseThreshold) * 5));
             const cells = document.querySelectorAll('.noise-level-cell');
             cells.forEach((cell, i) => {
@@ -586,7 +576,7 @@ let viewDate = new Date();
 
             if (avg > noiseThreshold) {
                 if (!noiseHighStartTime) noiseHighStartTime = Date.now();
-                if (Date.now() - noiseHighStartTime > 3000) { // 3초 유지 시
+                if (Date.now() - noiseHighStartTime > 3000) {
                     noiseStrikes++;
                     noiseHighStartTime = 0;
                     updateNoiseStrikesUI();
@@ -616,7 +606,6 @@ let viewDate = new Date();
             stopNoiseMonitoring();
             closeRoutineBanner();
             fireAlertOverlay("🚫 소음 기준 초과! 즉시 정숙하세요. 쉬는 시간을 종료합니다.");
-            // 정지 표지판 강제 표시 (toggleHomeLayer 로직 활용)
             const l = document.getElementById('homeLayer');
             const t = document.getElementById('homeTimer'), mission = document.getElementById('homeMission'), stopS = document.getElementById('stopSign');
             l.classList.add('show');
@@ -624,7 +613,12 @@ let viewDate = new Date();
             playAlarmSound('bell');
         }
 
-        function showRoutineBanner(title, text, type) { document.getElementById('routineTitle').innerText = title; document.getElementById('routineText').innerHTML = text.replace(/\n/g, '<br>'); document.getElementById('routineBanner').classList.add('show'); currentActiveRoutineType = type; }
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        function showRoutineBanner(title, text, type) { document.getElementById('routineTitle').innerText = title; document.getElementById('routineText').innerHTML = escapeHtml(text).replace(/\n/g, '<br>'); document.getElementById('routineBanner').classList.add('show'); currentActiveRoutineType = type; }
         function closeRoutineBanner() { document.getElementById('routineBanner').classList.remove('show'); if(currentActiveRoutineType) { routineDismissed[currentActiveRoutineType] = true; currentActiveRoutineType = ""; } }
         
         function openRoutineConfig() { 
@@ -643,18 +637,22 @@ let viewDate = new Date();
             localStorage.setItem('home_mission_v1', homeMissionText);
             closeAllModals(); 
             if (document.getElementById('routineBanner').classList.contains('show')) { 
-                if (currentActiveRoutineType === 'morning') document.getElementById('routineText').innerHTML = routineMsgs.morning.replace(/\n/g, '<br>'); 
-                if (currentActiveRoutineType === 'break1') document.getElementById('routineText').innerHTML = routineMsgs.break1.replace(/\n/g, '<br>'); 
+                if (currentActiveRoutineType === 'morning') document.getElementById('routineText').innerHTML = escapeHtml(routineMsgs.morning).replace(/\n/g, '<br>'); 
+                if (currentActiveRoutineType === 'break1') document.getElementById('routineText').innerHTML = escapeHtml(routineMsgs.break1).replace(/\n/g, '<br>'); 
             } 
         }
 
+        function refreshView() { renderAll(); fetchMeal(); fetchWeather(); closeAllModals(); }
+
         function renderAll() {
             const dk = viewDate.toLocaleDateString('sv-SE'), dNames = ["일","월","화","수","목","금","토"];
-            const dayNum = viewDate.getDay(), dayName = (dayNum === 0 || dayNum === 6) ? "월" : dNames[dayNum];
+            const dayNum = viewDate.getDay();
+            const isWeekend = (dayNum === 0 || dayNum === 6);
+            const dayName = isWeekend ? dNames[dayNum] : dNames[dayNum];
             document.getElementById('today-date').innerText = viewDate.toLocaleDateString('ko-KR', {month:'long', day:'numeric', weekday:'short'});
-            document.getElementById('tt-title').innerText = `${dayName}요일 시간표`;
+            document.getElementById('tt-title').innerText = isWeekend ? '주말' : `${dayName}요일 시간표`;
 
-            let list = temporaryTT[dk] || (weeklyTT[dayName] || Array(6).fill({s:"-", m:false}));
+            let list = isWeekend ? [] : (temporaryTT[dk] || (weeklyTT[dayName] || Array(6).fill({s:"-", m:false})));
 document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
     const sName = typeof obj === 'string' ? obj : obj.s; 
     const isMove = typeof obj === 'object' && obj.m;
@@ -664,15 +662,12 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
         let memoHtml = '';
         if (sName === "창체") {
             const dateKey = viewDate.toLocaleDateString('sv-SE');
-            const memo = creativeMemo[`${dateKey}-${i}`] || "활동 내용 입력";
-            // 메모 글자 크기를 1.2rem으로 줄이고 스타일을 다듬었습니다.
+            const memo = escapeHtml(creativeMemo[`${dateKey}-${i}`] || "활동 내용 입력");
             memoHtml = `
                 <div class="creative-memo-chip" onclick="event.stopPropagation(); editCreativeMemo(${i})">
                     📝 ${memo}
                 </div>`;
         }
-
-        // justify-content: center로 전체 항목을 가운데 정렬
         return `
             <div class="subject-item" style="display: flex; align-items: center; justify-content: center; padding: 8px 15px;" onclick="openQuickSubModal(${i})">
                 <div style="display: flex; align-items: center; flex-shrink: 0;">
@@ -685,7 +680,6 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
     })();
 }).join('');
 
-            // [순서] 계산 (기존 로직 유지)
             let workingDays = 0; let cur = new Date(orderRef.baseDate); cur.setHours(0,0,0,0); let target = new Date(viewDate.toDateString()); target.setHours(0,0,0,0);
             if (cur < target) { let temp = new Date(cur); while(temp < target) { if(temp.getDay() !== 0 && temp.getDay() !== 6) workingDays++; temp.setDate(temp.getDate() + 1); } } 
             else if (cur > target) { let temp = new Date(target); while(temp < cur) { if(temp.getDay() !== 0 && temp.getDay() !== 6) workingDays--; temp.setDate(temp.getDate() + 1); } }
@@ -702,7 +696,6 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
             
             document.getElementById('dynamic-content').innerHTML = orderList;
             
-            // [우유 당번] 계산 (별도 날짜 계산 분리 + 2명씩 건너뛰기)
             let milkWorkingDays = 0; 
             let milkCur = new Date(milkOrderRef.baseDate); milkCur.setHours(0,0,0,0); 
             if (milkCur < target) { 
@@ -715,10 +708,9 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
 
             const drinkers = studentData.filter(s => milkDrinkers.includes(s.code));
             if (drinkers.length > 0) {
-                let startIndexInDrinkers = drinkers.findIndex(s => s === studentData[milkOrderRef.startIdx]);
-                if (startIndexInDrinkers === -1) startIndexInDrinkers = 0; 
+                let startIndexInDrinkers = milkOrderRef.startIdx;
+                if (startIndexInDrinkers >= drinkers.length) startIndexInDrinkers = 0;
                 
-                // 여기서 milkWorkingDays에 2를 곱해서 하루 지날때마다 2명씩 점프하도록 수정! (음수 처리 포함)
                 let todayMilkIdx = (startIndexInDrinkers + (milkWorkingDays * 2)) % drinkers.length;
                 if (todayMilkIdx < 0) todayMilkIdx = (todayMilkIdx % drinkers.length) + drinkers.length;
                 
@@ -731,9 +723,13 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
         }
 
         function openMilkConfig() {
+            const drinkers = studentData.filter(s => milkDrinkers.includes(s.code));
             let h = '<div style="margin-bottom:15px; background:#fff9c4; padding:15px; border-radius:10px; text-align:center;">';
             h += `<b style="font-size:1.3rem;">📌 오늘 우유 당번 시작:</b> <select id="milkStartSelect" style="font-size:1.3rem; padding:5px; font-family:'Jua'; margin-left:10px; border:2px solid #ccc; border-radius:5px;">`;
-            studentData.forEach((s, i) => { h += `<option value="${i}" ${milkOrderRef.startIdx === i ? 'selected' : ''}>${s.name}</option>`; });
+            studentData.forEach((s, i) => { 
+                const isSelected = drinkers.length > 0 && milkOrderRef.startIdx < drinkers.length && drinkers[milkOrderRef.startIdx] && drinkers[milkOrderRef.startIdx].code === s.code;
+                h += `<option value="${i}" ${isSelected ? 'selected' : ''}>${s.name}</option>`; 
+            });
             h += `</select></div><div id="milk-chk-list" style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; text-align:left; font-size:1.3rem;">`;
             studentData.forEach(s => { h += `<label><input type="checkbox" id="milk-chk-${s.code}" ${milkDrinkers.includes(s.code)?'checked':''}> ${s.name}</label>`; });
             h += `</div>`; document.getElementById('milkConfigModalBody').innerHTML = h; document.getElementById('milkConfigModal').style.display = 'flex';
@@ -741,7 +737,11 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
 
         function saveMilkConfig() {
             milkDrinkers = studentData.filter(s => document.getElementById(`milk-chk-${s.code}`).checked).map(s => s.code);
-            milkOrderRef = { baseDate: new Date().toLocaleDateString('sv-SE'), startIdx: parseInt(document.getElementById('milkStartSelect').value) };
+            const selectedStudentIdx = parseInt(document.getElementById('milkStartSelect').value);
+            const selectedStudent = studentData[selectedStudentIdx];
+            const drinkersList = studentData.filter(s => milkDrinkers.includes(s.code));
+            const startIdxInDrinkers = drinkersList.findIndex(s => s.code === selectedStudent.code);
+            milkOrderRef = { baseDate: new Date().toLocaleDateString('sv-SE'), startIdx: startIdxInDrinkers >= 0 ? startIdxInDrinkers : 0 };
             localStorage.setItem('milkDrinkers_v1', JSON.stringify(milkDrinkers)); localStorage.setItem('milkOrder_v1', JSON.stringify(milkOrderRef));
             renderAll(); closeAllModals();
         }
@@ -800,14 +800,13 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
                     else if (sky === "4") { skyIcon = "☁️"; skyT = "흐림"; } 
                 }
                 let dustHtml = "";
-                try { const dRes = await fetch(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${WEATHER_KEY}&returnType=json&numOfRows=100&pageNo=1&sidoName=${encodeURIComponent(currentLoc.sido || '강원')}&ver=1.0`); const dData = await dRes.json(); const chuncheonDust = dData.response?.body?.items?.find(i => i.stationName.includes("중앙로") || i.stationName.includes("석사동"));
+                try { const dRes = await fetch(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${WEATHER_KEY}&returnType=json&numOfRows=100&pageNo=1&sidoName=${encodeURIComponent(currentLoc.sido || '강원')}&ver=1.0`); const dData = await dRes.json(); const localDust = dData.response?.body?.items?.[0];
 
-                    const pmValue = chuncheonDust ? parseInt(chuncheonDust.pm10Value, 10) : NaN;
+                    const pmValue = localDust ? parseInt(localDust.pm10Value, 10) : NaN;
                     const tVal = parseFloat(temp);
                     let bgColor = "#fff9c4"; 
                     weatherWarningMsg = ""; 
 
-                    // [종합 배경색 및 경보 메시지 결정 로직]
                     if (!isNaN(pmValue) && pmValue > 150) {
                         bgColor = "#ffebee"; weatherWarningMsg = "🚨 [미세먼지 매우나쁨] 실외 활동을 금지하고 마스크를 꼭 착용하세요! 😷";
                     } else if (!isNaN(pmValue) && pmValue > 80) {
@@ -832,7 +831,7 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
                     const marquee = document.getElementById('top-msg');
                     if (!marqueeRestoreTimer) marquee.innerText = getActiveMarqueeText();
 
-                    if (chuncheonDust) {
+                    if (localDust) {
                         let gradeText = "--", gradeColor = "#999";
                         if (isNaN(pmValue)) { gradeText = "측정중"; gradeColor = "#999"; }
                         else if (pmValue <= 30) { gradeText = "😆 좋음"; gradeColor = "#2196f3"; }
@@ -965,14 +964,12 @@ card.innerHTML = `
         function handleEvo(code, nextMilestone) {
             const data = gameData[code]; const student = studentData.find(s=>s.code===code); const rem = nextMilestone % 100;
             data.ackTotal = nextMilestone;
-            setTimeout(function() {
-                if (rem === 30) showMarqueeMessage('🐛 축하합니다! ' + student.name + ' 학생의 애벌레가 깨어났어요!', 45000);
-                else if (rem === 60) showMarqueeMessage('🛖 ' + student.name + ' 학생, 번데기가 되었어요!', 45000);
-                else if (rem === 90) { const newBug = bugPool[Math.floor(Math.random() * bugPool.length)]; data.currentBug = newBug; showMarqueeMessage('🦋 우화 성공! ' + student.name + ' 학생이 [' + newBug.name + '] ' + newBug.icon + ' 을(를) 획득했습니다!', 60000); }
-                else if (rem === 0) { const bugToGarden = data.currentBug || {icon:'🦋', name:'나비'}; data.garden.push(bugToGarden); data.currentBug = null; showMarqueeMessage('🌸 ' + student.name + ' 학생의 [' + bugToGarden.name + '] 이(가) 정원으로 날아갔어요! 새로운 알을 발견했어요! 🥚', 60000); renderGarden(); }
-                playAlarmSound('celebration');
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(gameData)); renderBugGrid();
-            }, 100);
+            if (rem === 30) showMarqueeMessage('🐛 축하합니다! ' + student.name + ' 학생의 애벌레가 깨어났어요!', 45000);
+            else if (rem === 60) showMarqueeMessage('🛖 ' + student.name + ' 학생, 번데기가 되었어요!', 45000);
+            else if (rem === 90) { const newBug = bugPool[Math.floor(Math.random() * bugPool.length)]; data.currentBug = newBug; showMarqueeMessage('🦋 우화 성공! ' + student.name + ' 학생이 [' + newBug.name + '] ' + newBug.icon + ' 을(를) 획득했습니다!', 60000); }
+            else if (rem === 0) { const bugToGarden = data.currentBug || {icon:'🦋', name:'나비'}; data.garden.push(bugToGarden); data.currentBug = null; showMarqueeMessage('🌸 ' + student.name + ' 학생의 [' + bugToGarden.name + '] 이(가) 정원으로 날아갔어요! 새로운 알을 발견했어요! 🥚', 60000); renderGarden(); }
+            playAlarmSound('celebration');
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(gameData)); renderBugGrid();
         }
 
         function applySuperChance() {
@@ -980,20 +977,13 @@ card.innerHTML = `
             studentData.forEach(s => {
                 const data = gameData[s.code];
                 if (!data) return;
-
                 const oldTotal = data.ackTotal;
                 let nextMilestone = (Math.floor(data.ackTotal / 10) + 1) * 10;
-                
                 increments[s.code] = nextMilestone - oldTotal;
-
                 data.ackTotal = nextMilestone;
-                
-                // 실제 쿠키 수도 함께 업데이트
                 if (!currentAPI_Totals[s.code]) currentAPI_Totals[s.code] = 0;
                 currentAPI_Totals[s.code] = nextMilestone;
-                
                 const finalRem = nextMilestone % 100;
-
                 if (finalRem === 90 && !data.currentBug) {
                     data.currentBug = bugPool[Math.floor(Math.random() * bugPool.length)];
                 } else if (finalRem === 0) {
@@ -1004,9 +994,7 @@ card.innerHTML = `
             });
             localStorage.setItem(STORAGE_KEY, JSON.stringify(gameData));
             renderBugGrid(); renderGarden();
-
             spawnSuperConfetti();
-
             const cards = document.querySelectorAll('.cookie-individual');
             studentData.forEach((s, idx) => {
                 const card = cards[idx];
@@ -1019,7 +1007,6 @@ card.innerHTML = `
                     setTimeout(() => upText.remove(), 2000);
                 }
             });
-
             showMarqueeMessage('🌈 [슈퍼 찬스 당첨!] 모든 학생의 쿠키가 다음 십의 자리로 올림되었습니다! 🌈', 15000);
             playAlarmSound('celebration');
         }
@@ -1030,9 +1017,7 @@ card.innerHTML = `
                 if(gameData[s.code] && gameData[s.code].garden) {
                     gameData[s.code].garden.forEach(bug => {
                         const bugEl = document.createElement('div'); bugEl.className = 'garden-bug'; 
-                        
                         bugEl.innerHTML = `<span style="display:inline-block; ${bug.css || ''}">${bug.icon}</span>`; 
-                        
                         bugEl.setAttribute('data-name', `${s.name}의 ${bug.name}`);
                         bugEl.style.left = Math.floor(Math.random() * 90) + '%'; bugEl.style.top = Math.floor(Math.random() * 70) + 10 + '%'; bugEl.style.animation = `floatAround ${10 + Math.random() * 10}s infinite alternate ease-in-out`; bugEl.style.animationDelay = `-${Math.random() * 5}s`;
                         bugEl.onclick = () => alert(`${s.name} 학생이 정성껏 키운 [ ${bug.name} ] 입니다!`);
@@ -1059,7 +1044,6 @@ card.innerHTML = `
         function calculateGardenHealth() {
             const totals = { total: 0, pollinator: 0, predator: 0, decomposer: 0, herbivore: 0, neutral: 0 };
             const details = { pollinator: [], predator: [], decomposer: [], herbivore: [], neutral: [] };
-            
             studentData.forEach(s => {
                 const data = gameData[s.code];
                 if (!data || !Array.isArray(data.garden)) return;
@@ -1126,15 +1110,12 @@ card.innerHTML = `
         function renderGardenStatus(status) {
             const statusEl = document.getElementById('garden-status');
             if (!statusEl) return;
-
             const totals = status.totals || status;
             const details = status.details || { pollinator: [], predator: [], decomposer: [] };
-
             const formatList = (list) => {
                 if (!list || list.length === 0) return '없음';
                 return list.map(item => `${item.student}의 ${item.bug.icon} ${item.bug.name}`).join(', ');
             };
-
             statusEl.innerHTML = `
                 <div class="garden-status-grid">
                     <div class="garden-status-card">
@@ -1181,18 +1162,15 @@ card.innerHTML = `
 
         function checkAlarms(now) { 
             if (!isViewDateToday(viewDate)) return;
-
             const curSec = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds(); 
             const dName = ["일","월","화","수","목","금","토"][viewDate.getDay()]; 
             const tt = temporaryTT[viewDate.toLocaleDateString('sv-SE')] || weeklyTT[dName]; 
             if(!tt) return; 
-
             const miniTimer = document.getElementById('mini-timer');
             const fullAlert = document.getElementById('full-screen-alert');
             const alertMsg = document.getElementById('alert-message');
             const alertTimer = document.getElementById('alert-timer');
             const mainAlarmMsg = document.getElementById('alarm-msg');
-
             let nearestIdx = -1;
             let nearestDiff = Infinity;
             classTimes.forEach((st, i) => {
@@ -1204,22 +1182,18 @@ card.innerHTML = `
                     nearestIdx = i;
                 }
             });
-
             currentAlarmIdx = nearestIdx;
-
             if (nearestIdx === -1) {
                 fullAlert.style.display = 'none';
                 miniTimer.style.display = 'none';
                 mainAlarmMsg.innerText = '';
                 return;
             }
-
             const diff = nearestDiff;
             const isSpecial = tt[nearestIdx] && tt[nearestIdx].m;
             const subj = tt[nearestIdx] && tt[nearestIdx].s !== "-" ? tt[nearestIdx].s : (nearestIdx+1)+"교시";
 
             if (isSpecial && diff <= 300 && diff > 60) {
-                // 사용자가 해당 교시 알람을 끄지 않았을 때만 화면에 표시
                 if (lastDismissedAlarmIdx !== nearestIdx) fullAlert.style.display = 'flex';
                 fullAlert.style.background = 'rgba(52, 152, 219, 0.95)';
                 alertMsg.innerText = `🏃 곧 ${subj} (이동 수업) 입니다!`;
@@ -1227,21 +1201,19 @@ card.innerHTML = `
                 miniTimer.style.display = 'none';
                 mainAlarmMsg.innerText = '';
             }
-            else if (diff <= 600 && diff > 60) {
+            else if (diff <= 600 && diff > 61) {
                 fullAlert.style.display = 'none';
                 miniTimer.style.display = 'block';
                 miniTimer.innerText = `다음 수업 시작 ${Math.floor(diff / 60)}분 ${diff % 60}초 전`;
                 mainAlarmMsg.innerText = '';
             }
-            else if (diff <= 60 && diff > 0) {
+            else if (diff <= 61 && diff > 0) {
                 miniTimer.style.display = 'none';
-                // 사용자가 해당 교시 알람을 끄지 않았을 때만 화면에 표시
                 if (lastDismissedAlarmIdx !== nearestIdx) fullAlert.style.display = 'flex';
                 fullAlert.style.background = 'rgba(255, 138, 128, 0.95)'; 
                 alertMsg.innerText = isSpecial ? `🚀 ${subj} 특별실 이동 1분 전!` : `📝 ${subj} 수업 준비 1분 전!`;
-                alertTimer.innerText = diff;
+                alertTimer.innerText = diff > 60 ? 60 : diff;
                 mainAlarmMsg.innerText = `🔔 ${subj} 시작 ${diff}초 전!`; 
-
                 if (diff <= 30 && lastTickSecond !== now.getSeconds()) {
                     playTickSound();
                     lastTickSecond = now.getSeconds();
@@ -1268,7 +1240,6 @@ card.innerHTML = `
             let h = '<tr><th>교시</th>' + ["월","화","수","목","금"].map(d=>`<th>${d}</th>`).join('') + '</tr>';
             for(let i=0; i<6; i++) { h += `<tr><td>${i+1}</td>` + ["월","화","수","목","금"].map(d => { const obj = weeklyTT[d][i]; return `<td style="padding:5px; border:1px solid #ccc;"><select id="set-s-${d}-${i}" style="font-family:'Jua'; padding:3px;">${subjects.map(s=>`<option value="${s}" ${obj.s===s?'selected':''}>${s}</option>`).join('')}</select><br><label style="font-size:1.1rem;"><input type="checkbox" id="set-m-${d}-${i}" ${obj.m?'checked':''}> 이동</label></td>`; }).join('') + '</tr>'; }
             document.getElementById('ttSettingTable').innerHTML = h; 
-            
             let tHtml = ''; 
             classTimes.forEach((t, i) => { 
                 tHtml += `<div style="margin-bottom:12px; font-size:1.4rem;">${i+1}교시: <input type="time" id="set-time-${i}" value="${t}" style="font-family:'Jua'; padding:5px;"> 
@@ -1299,30 +1270,23 @@ card.innerHTML = `
             const dNames = ["일", "월", "화", "수", "목", "금", "토"];
             const dayName = dNames[viewDate.getDay()]; 
             const baseDayName = (dayName === "일" || dayName === "토") ? "월" : dayName;
-
             if (!temporaryTT[dk]) { 
                 const baseTT = weeklyTT[baseDayName] || Array(6).fill().map(() => ({ s: "-", m: false })); 
                 temporaryTT[dk] = JSON.parse(JSON.stringify(baseTT)); 
             }
-
             const isMove = document.getElementById('quick-move-chk') ? document.getElementById('quick-move-chk').checked : false;
             temporaryTT[dk][i] = { s: s, m: isMove }; 
-            
             localStorage.setItem('temporaryTT_v1', JSON.stringify(temporaryTT)); 
-            
             renderAll(); 
             closeAllModals(); 
         }
-        function applyDate() { const v = document.getElementById('date-picker-input').value; if(v){ viewDate=new Date(v); renderAll(); fetchMeal(); fetchWeather(); closeAllModals(); } }
-        function goToPrevDay() { viewDate.setDate(viewDate.getDate() - 1); renderAll(); fetchMeal(); fetchWeather(); closeAllModals(); }
-        function goToNextDay() { viewDate.setDate(viewDate.getDate() + 1); renderAll(); fetchMeal(); fetchWeather(); closeAllModals(); }
-        function goToToday() { viewDate=new Date(); renderAll(); fetchMeal(); fetchWeather(); closeAllModals(); }
-        function closeAllModals() { 
-            document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); 
-            const goalInput = document.getElementById('goal-input');
-            if(goalInput) goalInput.value = cookieGoal; 
-        }
-        function saveCookieGoal() { cookieGoal=parseInt(document.getElementById('goal-input').value); localStorage.setItem('cookieGoal_v5', cookieGoal); syncCookies(); closeAllModals(); }
+        function applyDate() { const v = document.getElementById('date-picker-input').value; if(v){ viewDate=new Date(v); refreshView(); } }
+        function goToPrevDay() { viewDate.setDate(viewDate.getDate() - 1); refreshView(); }
+        function goToNextDay() { viewDate.setDate(viewDate.getDate() + 1); refreshView(); }
+        function goToToday() { viewDate=new Date(); refreshView(); }
+        function closeAllModals() { document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); }
+        function closeModalsAndRestoreGoal() { closeAllModals(); const goalInput = document.getElementById('goal-input'); if(goalInput) goalInput.value = cookieGoal; }
+        function saveCookieGoal() { cookieGoal=parseInt(document.getElementById('goal-input').value); localStorage.setItem('cookieGoal_v5', cookieGoal); syncCookies(); closeModalsAndRestoreGoal(); }
 
         function openLocationModal() {
             const select = document.getElementById('location-select');
@@ -1357,7 +1321,6 @@ card.innerHTML = `
             fetchWeather();
         }
 
-        // --- 알림장 기능 통합 ---
         function openNotepad() {
             const savedContent = localStorage.getItem('notepad_v1') || '';
             document.getElementById('notepad-content').value = savedContent;
@@ -1410,7 +1373,6 @@ card.innerHTML = `
             renderAll();
         }
 
-// ✨ 학생 데이터 불러오기 기능 추가
 function importStudentData(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1418,7 +1380,6 @@ function importStudentData(event) {
     reader.onload = function(e) {
         try {
             const importedStudents = JSON.parse(e.target.result);
-            // 데이터 유효성 검사 (name과 code 필드 확인)
             if (!Array.isArray(importedStudents) || !importedStudents.every(s => s.name && s.code)) {
                 alert("학생 데이터 파일 형식이 올바르지 않습니다. 각 항목은 'name'과 'code'를 포함해야 합니다.");
                 return;
@@ -1434,57 +1395,44 @@ function importStudentData(event) {
     reader.readAsText(file);
 }
 
-// ✨ 진정한 무작위 비행 (AI 알고리즘)
         setInterval(() => {
             const flyingBugs = document.querySelectorAll('.fly-all-over');
             flyingBugs.forEach(bug => {
-                // 70% 확률로 움직이고, 30% 확률로 그 자리에 더 머뭅니다 (휴식)
                 if (Math.random() > 0.3) {
-                    // 화면의 어디로 갈지 매번 완전히 새롭게 무작위 계산
-                    const randomX = (Math.random() * 80 - 40).toFixed(1); // 가로 랜덤 좌표
-                    const randomY = (Math.random() * 90 - 45).toFixed(1); // 세로 랜덤 좌표
-                    const randomAngle = (Math.random() * 40 - 20).toFixed(1); // 기우는 각도도 랜덤
-                    
-                    // 새로운 목적지로 출발!
+                    const randomX = (Math.random() * 80 - 40).toFixed(1);
+                    const randomY = (Math.random() * 90 - 45).toFixed(1);
+                    const randomAngle = (Math.random() * 40 - 20).toFixed(1);
                     bug.style.transform = `translate(${randomX}vw, ${randomY}vh) rotate(${randomAngle}deg) scale(1.6)`;
                 }
             });
-        }, 8000); // 8초마다 행동 결정 (5초 비행 + 3초 기본 휴식)
+        }, 8000);
 
-// =================================================================
-        // 🎰 룰렛 시스템
-        // =================================================================
         let isWheelSpinning = false;
 
         function setupRouletteUI() {
             if (document.getElementById('eventRouletteBtn')) return;
-            const sideButtons = document.querySelectorAll('.side-btn');
-            sideButtons.forEach(function(btn) {
-                if (btn.innerText.includes('기본 설정')) {
-                    const rouletteBtn = document.createElement('button');
-                    rouletteBtn.className = 'side-btn';
-                    rouletteBtn.id = 'eventRouletteBtn';
-                    rouletteBtn.style.background = '#e91e63';
-                    rouletteBtn.style.color = 'white';
-                    rouletteBtn.style.boxShadow = '0 4px 0 #ad1457';
-                    rouletteBtn.innerText = '🎰 오늘의 이벤트 뽑기';
-                    rouletteBtn.onclick = openRouletteModal;
-                    btn.after(rouletteBtn);
-                }
-                if (btn.innerText.includes('이벤트 뽑기') || btn.id === 'eventRouletteBtn') {
-                    if (!document.getElementById('manualNoiseBtn')) {
-                        const noiseBtn = document.createElement('button');
-                        noiseBtn.className = 'side-btn';
-                        noiseBtn.id = 'manualNoiseBtn';
-                        noiseBtn.style.background = '#607d8b';
-                        noiseBtn.style.color = 'white';
-                        noiseBtn.style.marginTop = '5px';
-                        noiseBtn.innerText = '🔇 소음 측정 시작';
-                        noiseBtn.onclick = toggleManualNoiseMonitoring;
-                        btn.after(noiseBtn);
-                    }
-                }
-            });
+            
+            const rouletteBtn = document.createElement('button');
+            rouletteBtn.className = 'side-btn';
+            rouletteBtn.id = 'eventRouletteBtn';
+            rouletteBtn.style.background = '#e91e63';
+            rouletteBtn.style.color = 'white';
+            rouletteBtn.style.boxShadow = '0 4px 0 #ad1457';
+            rouletteBtn.innerText = '🎰 오늘의 이벤트 뽑기';
+            rouletteBtn.onclick = openRouletteModal;
+            document.querySelector('.side-btn:last-of-type').after(rouletteBtn);
+            
+            if (!document.getElementById('manualNoiseBtn')) {
+                const noiseBtn = document.createElement('button');
+                noiseBtn.className = 'side-btn';
+                noiseBtn.id = 'manualNoiseBtn';
+                noiseBtn.style.background = '#607d8b';
+                noiseBtn.style.color = 'white';
+                noiseBtn.style.marginTop = '5px';
+                noiseBtn.innerText = '🔇 소음 측정 시작';
+                noiseBtn.onclick = toggleManualNoiseMonitoring;
+                rouletteBtn.after(noiseBtn);
+            }
             if (!document.getElementById('rouletteOverlay')) {
                 document.body.insertAdjacentHTML('beforeend', `
                 <div class="roulette-overlay" id="rouletteOverlay">
@@ -1503,7 +1451,6 @@ function importStudentData(event) {
             drawRouletteWheel();
         }
 
-        // 슈퍼 찬스 도전 UI 생성 및 실행
         function openSuperChanceChallenge() {
             if (document.getElementById('superChallengeOverlay')) {
                 document.getElementById('superChallengeOverlay').style.display = 'flex';
@@ -1520,8 +1467,6 @@ function importStudentData(event) {
                 document.body.insertAdjacentHTML('beforeend', html);
                 document.getElementById('superChallengeOverlay').style.display = 'flex';
             }
-            
-            // 10개 슬롯 생성
             const container = document.getElementById('chanceVisualizer');
             container.innerHTML = '';
             for (let i = 0; i < 10; i++) {
@@ -1535,47 +1480,44 @@ function importStudentData(event) {
             const btn = document.getElementById('startChallengeBtn');
             btn.disabled = true;
             btn.innerText = '두근두근...';
-            
-            const winIdx = Math.floor(Math.random() * 10); // 실제 당첨 인덱스
-            const isWin = (winIdx === 0); // 10% 확률 (0번일 때만 당첨)
-            
+            const winIdx = Math.floor(Math.random() * 10);
+            const isWin = (winIdx === 0);
             let current = 0;
             let loops = 0;
             const interval = setInterval(() => {
                 document.querySelectorAll('.chance-slot').forEach(s => s.classList.remove('active'));
                 document.getElementById(`slot-${current}`).classList.add('active');
-                
                 current = (current + 1) % 10;
                 if (current === 0) loops++;
-                
-                // 3바퀴 돌고 멈춤
-                if (loops >= 3 && current === (isWin ? 0 : (winIdx === 0 ? 1 : winIdx))) {
+                if (loops >= 3 && current === winIdx) {
                     clearInterval(interval);
-                    finishChallenge(isWin);
+                    finishChallenge(isWin, winIdx);
                 }
             }, 100);
         }
 
-        function finishChallenge(isWin) {
+        function resetSpinBtnToClose() {
+            isWheelSpinning = false;
+            const spinBtn = document.getElementById('spinActionBtn');
+            if (spinBtn) {
+                spinBtn.disabled = false;
+                spinBtn.innerText = '✖️ 닫기';
+                spinBtn.style.background = '#f44336';
+                spinBtn.onclick = closeRouletteModal;
+            }
+        }
+
+        function finishChallenge(isWin, winIdx) {
             const slots = document.querySelectorAll('.chance-slot');
             slots.forEach(s => s.classList.remove('active'));
-            const resultSlot = document.getElementById('slot-' + (isWin ? 0 : 1)); // 시각적 결과 고정
-            
+            const resultSlot = document.getElementById('slot-' + winIdx);
             if (isWin) {
                 resultSlot.innerHTML = '<span class="slot-gold">✨</span>';
                 resultSlot.classList.add('winner');
                 setTimeout(() => {
                     applySuperChance();
                     document.getElementById('superChallengeOverlay').style.display = 'none';
-                    // 룰렛 상태 초기화
-                    isWheelSpinning = false;
-                    const spinBtn = document.getElementById('spinActionBtn');
-                    if (spinBtn) {
-                        spinBtn.disabled = false;
-                        spinBtn.innerText = '✖️ 닫기';
-                        spinBtn.style.background = '#f44336';
-                        spinBtn.onclick = closeRouletteModal;
-                    }
+                    resetSpinBtnToClose();
                     closeRouletteModal();
                 }, 1500);
             } else {
@@ -1583,15 +1525,7 @@ function importStudentData(event) {
                 setTimeout(() => {
                     alert("아쉽습니다! 다음 기회에...");
                     document.getElementById('superChallengeOverlay').style.display = 'none';
-                    // 룰렛 상태 초기화
-                    isWheelSpinning = false;
-                    const spinBtn = document.getElementById('spinActionBtn');
-                    if (spinBtn) {
-                        spinBtn.disabled = false;
-                        spinBtn.innerText = '✖️ 닫기';
-                        spinBtn.style.background = '#f44336';
-                        spinBtn.onclick = closeRouletteModal;
-                    }
+                    resetSpinBtnToClose();
                     closeRouletteModal();
                 }, 1000);
             }
@@ -1646,8 +1580,7 @@ function importStudentData(event) {
             const resetBtn = document.getElementById('superChanceResetBtn');
             const forceBtn = document.getElementById('forceSuperChanceBtn');
             if (saved) {
-                alert('🎰 오늘의 뽑기 결과\n\n' + saved.title + '\n\n📢 알림:\n' + saved.alert);
-                // 슈퍼찬스(초록색) 이벤트일 때만 버튼 표시
+                alert('🎰 오늘의 뽑기 결과\n\n' + escapeHtml(saved.title) + '\n\n📢 알림:\n' + escapeHtml(saved.alert));
                 const isSuperChance = saved.index >= 0 && saved.index < wheelItems.length && wheelItems[saved.index].color === "#4caf50";
                 if (resetBtn) resetBtn.style.display = isSuperChance ? 'block' : 'none';
                 if (forceBtn) forceBtn.style.display = isSuperChance ? 'block' : 'none';
@@ -1667,15 +1600,9 @@ function importStudentData(event) {
             if (!confirm('슈퍼찬스 보너스를 초기화하시겠습니까?\n\n모든 학생의 슈퍼찬스 보너스가 삭제되고,\n다음 뽑기에서 새로 적용됩니다.')) {
                 return;
             }
-            
-            // 먼저 보너스 초기화 (syncCookies 전에!)
             superChanceBonus = {};
             localStorage.removeItem('superChanceBonus_v1');
-            
-            // 최신 쿠키 데이터 동기화 (보너스 없이)
             await syncCookies();
-            
-            // gameData의 ackTotal을 실제 API 쿠키 수로 초기화 (보너스 제거)
             studentData.forEach(s => {
                 if (gameData[s.code]) {
                     const currentTotal = currentAPI_Totals[s.code] || 0;
@@ -1683,13 +1610,8 @@ function importStudentData(event) {
                 }
             });
             localStorage.setItem(STORAGE_KEY, JSON.stringify(gameData));
-            
-            // 오늘의 뽑기 결과도 삭제 (다음 뽑기에서 새로 적용되도록)
             localStorage.removeItem('roulette_daily_v1');
-            
-            // 초기화 플래그 설정 (다음 로드 시 fixTodaySuperChanceIfNeeded가 실행되지 않도록)
             localStorage.setItem('superChanceReset_v1', 'true');
-            
             const resetBtn = document.getElementById('superChanceResetBtn');
             if (resetBtn) resetBtn.style.display = 'none';
             showMarqueeMessage('🔄 슈퍼찬스 보너스가 초기화되었습니다.', 5000);
@@ -1709,41 +1631,29 @@ function importStudentData(event) {
             if (forceBtn) forceBtn.style.display = 'none';
         }
         
-        // 오늘 슈퍼찬스 당첨 보너스가 누락된 경우 복구
         function fixTodaySuperChanceIfNeeded() {
-            // 초기화 직후에는 보너스 복구를 스킵
             if (localStorage.getItem('superChanceReset_v1')) {
                 localStorage.removeItem('superChanceReset_v1');
                 return;
             }
-            
             const saved = getTodayRoulette();
-            if (!saved) return; // 오늘 뽑기가 없으면 스킵
-            
-            // 초록색 이벤트(#4caf50)가 당첨되었는지 확인
+            if (!saved) return;
             const isSuperChanceEvent = saved.index >= 0 && saved.index < wheelItems.length && wheelItems[saved.index].color === "#4caf50";
-            if (!isSuperChanceEvent) return; // 슈퍼찬스 이벤트가 아니면 스킵
-            
-            // 이미 보너스가 적용되었는지 확인
+            if (!isSuperChanceEvent) return;
             const hasBonus = studentData.some(s => superChanceBonus[s.code] && superChanceBonus[s.code] > 0);
-            if (hasBonus) return; // 이미 보너스가 있으면 스킵
-            
-            // 보너스 계산 및 적용
+            if (hasBonus) return;
             let needsFix = false;
             studentData.forEach(s => {
                 const data = gameData[s.code];
                 if (!data) return;
-                
                 const oldTotal = data.ackTotal;
                 const nextMilestone = (Math.floor(oldTotal / 10) + 1) * 10;
                 const bonus = nextMilestone - oldTotal;
-                
                 if (bonus > 0) {
                     superChanceBonus[s.code] = nextMilestone;
                     needsFix = true;
                 }
             });
-            
             if (needsFix) {
                 localStorage.setItem('superChanceBonus_v1', JSON.stringify(superChanceBonus));
                 console.log('✅ 오늘 슈퍼찬스 보너스가 복구되었습니다.');
@@ -1756,7 +1666,6 @@ function importStudentData(event) {
             isWheelSpinning = true;
             const canvas = document.getElementById('rouletteCanvas');
             const spinBtn = document.getElementById('spinActionBtn');
-            const sideBtn = document.getElementById('eventRouletteBtn');
             spinBtn.disabled = true;
             spinBtn.innerText = '👀 도는 중...';
             const numSegments = wheelItems.length;
@@ -1766,35 +1675,25 @@ function importStudentData(event) {
             canvas.style.transform = 'rotate(' + ((360 * 6) + stopAngle) + 'deg)';
             setTimeout(function() {
                 const finalEvent = wheelItems[targetIndex];
-                document.getElementById('top-msg').innerHTML = finalEvent.title;
+                document.getElementById('top-msg').innerHTML = escapeHtml(finalEvent.title);
                 playAlarmSound('celebration');
                 clearLucky369Effect();
                 if (finalEvent.isLucky369) applyLucky369Effect();
                 saveTodayRoulette({ index: targetIndex, title: finalEvent.title, alert: finalEvent.alert, isLucky369: !!finalEvent.isLucky369 });
-                
-                // 결과를 모달에 표시
                 const resultDisplay = document.getElementById('rouletteResultDisplay');
                 if (resultDisplay) {
                     resultDisplay.innerHTML = `<div style="font-size:2rem; margin:20px 0; padding:20px; background:${finalEvent.color}; color:white; border-radius:15px; text-align:center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">${finalEvent.title}</div>`;
                     resultDisplay.style.display = 'block';
                 }
-                
-                // 초록색 칸(#4caf50)이면 도전 버튼 표시
                 if (finalEvent.color === "#4caf50") {
                     spinBtn.innerText = '🌈 슈퍼 찬스 도전하기!';
                     spinBtn.style.background = '#ff9800';
                     spinBtn.onclick = () => { openSuperChanceChallenge(); closeRouletteModal(); };
                     spinBtn.disabled = false;
-                    return; // 바로 닫지 않고 대기
+                    return;
                 }
-
                 markRouletteComplete(finalEvent);
-                isWheelSpinning = false;
-                spinBtn.disabled = false;
-                spinBtn.innerText = '✖️ 닫기';
-                spinBtn.style.background = '#f44336';
-                spinBtn.onclick = closeRouletteModal;
-                // closeRouletteModal()을 자동으로 호출하지 않음 - 사용자가 직접 닫을 수 있도록
+                resetSpinBtnToClose();
             }, 4100);
         }
 
