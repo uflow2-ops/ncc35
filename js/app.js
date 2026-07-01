@@ -1224,6 +1224,7 @@ card.innerHTML = `
             }
             else if (diff <= 61 && diff > 0) {
                 miniTimer.style.display = 'none';
+                lastDismissedAlarmIdx = -1;
                 if (lastDismissedAlarmIdx !== nearestIdx) fullAlert.style.display = 'flex';
                 fullAlert.style.background = 'rgba(255, 138, 128, 0.95)'; 
                 alertMsg.innerText = isSpecial ? `🚀 ${subj} 특별실 이동 1분 전!` : `📝 ${subj} 수업 준비 1분 전!`;
@@ -1238,6 +1239,7 @@ card.innerHTML = `
                 miniTimer.style.display = 'none';
                 fullAlert.style.display = 'none';
                 mainAlarmMsg.innerText = '';
+                lastDismissedAlarmIdx = -1;
                 if (lastDismissedAlarmIdx !== nearestIdx) {
                     document.getElementById('bigAlert').style.display = 'flex'; 
                     document.getElementById('bigAlertText').innerText = "수업 준비합시다!"; 
@@ -1253,7 +1255,18 @@ card.innerHTML = `
             if (currentAlarmIdx !== -1) lastDismissedAlarmIdx = currentAlarmIdx;
         }
         function toggleDahand(show) { const l = document.getElementById('dahandLayer'); if(show){ l.classList.add('show'); document.getElementById('dahandFrame').src="https://dahandin.com/"; } else l.classList.remove('show'); }
-        function toggleGarden(show) { const l = document.getElementById('gardenLayer'); if(show) l.classList.add('show'); else l.classList.remove('show'); }
+        function toggleGarden(show) { 
+            const l = document.getElementById('gardenLayer'); 
+            const panel = document.getElementById('gardenStatusPanel');
+            if(show) { 
+                l.classList.add('show'); 
+                panel.classList.add('show');
+                renderGarden();
+            } else { 
+                l.classList.remove('show'); 
+                panel.classList.remove('show');
+            }
+        }
 
         function openTTConfigModal() {
             let h = '<tr><th>교시</th>' + ["월","화","수","목","금"].map(d=>`<th>${d}</th>`).join('') + '</tr>';
@@ -1667,7 +1680,7 @@ function importStudentData(event) {
                 const nextMilestone = (Math.floor(oldTotal / 10) + 1) * 10;
                 const bonus = nextMilestone - oldTotal;
                 if (bonus > 0) {
-                    superChanceBonus[s.code] = nextMilestone;
+                    superChanceBonus[s.code] = bonus;
                     needsFix = true;
                 }
             });

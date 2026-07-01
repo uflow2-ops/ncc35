@@ -237,6 +237,12 @@
         </div>
     </div>
 
+    <div id="gardenStatusPanel" class="garden-status-panel">
+        <div id="garden-status" style="background:rgba(255,255,255,0.95); border:2px solid #a5d6a7; border-radius:20px; padding:14px; color:#3e2723; font-size:1.2rem; line-height:1.5; box-shadow:0 10px 20px rgba(0,0,0,0.08);">
+            생태 정원 상태를 불러오는 중입니다...
+        </div>
+    </div>
+
     <div id="gardenLayer" class="slide-layer" style="height:65%; border-top:8px solid #81c784;">
         <div style="padding:12px 20px; background:#4caf50; color:white; display:flex; justify-content:space-between; align-items:center; z-index:20;" onclick="toggleGarden(false)"><span>🌸 우리 반 생태 정원</span><span style="cursor:pointer;">닫기 ✖</span></div>
         <div id="garden-bg" style="position:absolute; inset:0; top:50px; overflow:hidden;"></div>
@@ -244,9 +250,6 @@
         <div id="shared-garden" style="position:absolute; inset:0; top:50px; overflow:hidden;"></div>
         <div id="garden-predators" style="position:absolute; inset:0; pointer-events:none; z-index:22;"></div>
         <div id="garden-soil" style="position:absolute; left:0; right:0; bottom:0; height:50px; z-index:24;"></div>
-        <div id="garden-status" style="position:absolute; left:20px; right:20px; bottom:70px; background:rgba(255,255,255,0.95); border:2px solid #a5d6a7; border-radius:20px; padding:14px; color:#3e2723; font-size:1.2rem; line-height:1.5; z-index:30; box-shadow:0 10px 20px rgba(0,0,0,0.08);">
-            생태 정원 상태를 불러오는 중입니다...
-        </div>
     </div>
 
     
