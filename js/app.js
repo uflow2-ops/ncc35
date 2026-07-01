@@ -1220,6 +1220,7 @@ card.innerHTML = `
                 miniTimer.style.display = 'block';
                 miniTimer.innerText = `다음 수업 시작 ${Math.floor(diff / 60)}분 ${diff % 60}초 전`;
                 mainAlarmMsg.innerText = '';
+                lastDismissedAlarmIdx = -1;
             }
             else if (diff <= 61 && diff > 0) {
                 miniTimer.style.display = 'none';
