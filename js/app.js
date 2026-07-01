@@ -1235,11 +1235,13 @@ card.innerHTML = `
             }
             else if (diff === 0) {
                 miniTimer.style.display = 'none';
+                fullAlert.style.display = 'none';
                 mainAlarmMsg.innerText = '';
                 if (lastDismissedAlarmIdx !== nearestIdx) {
                     document.getElementById('bigAlert').style.display = 'flex'; 
                     document.getElementById('bigAlertText').innerText = "수업 준비합시다!"; 
                     playAlarmSound('bell');
+                    lastDismissedAlarmIdx = nearestIdx;
                 }
             }
         }
