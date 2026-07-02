@@ -1327,6 +1327,278 @@ card.innerHTML = `
             if(show) { l.classList.add('show'); f.src = `lunch.html?date=${toLocalDateStr(viewDate)}`; } 
             else { l.classList.remove('show'); }
         }
+        function toggleDataAnalysis(show) {
+            const l = document.getElementById('dataAnalysisLayer');
+            if(show) { 
+                l.classList.add('show'); 
+                renderDataAnalysis();
+            } else { 
+                l.classList.remove('show'); 
+            }
+        }
+        
+        function renderDataAnalysis() {
+            renderCookieTrendChart();
+            renderClassStats();
+            renderSubjectChart();
+            renderGardenStats();
+        }
+        
+        function renderCookieTrendChart() {
+            const canvas = document.getElementById('cookieTrendChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            ctx.clearRect(0, 0, width, height);
+            
+            // 최근 7일 데이터 수집
+            const days = [];
+            const data = [];
+            const today = new Date();
+            
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(d.getDate() - i);
+                const dateStr = toLocalDateStr(d);
+                days.push(d.getMonth() + 1 + '/' + d.getDate());
+                
+                // 해당 날짜의 총 쿠키 수 계산
+                const prevTotals = JSON.parse(localStorage.getItem('prev_api_totals') || '{}');
+                let total = 0;
+                studentData.forEach(s => {
+                    total += prevTotals[s.code] || 0;
+                });
+                data.push(total);
+            }
+            
+            // 차트 그리기
+            const padding = 50;
+            const chartWidth = width - padding * 2;
+            const chartHeight = height - padding * 2;
+            const maxVal = Math.max(...data, 1);
+            const stepX = chartWidth / (days.length - 1);
+            
+            // 배경 그리드
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (chartHeight / 5) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
+            }
+            
+            // 라인 그리기
+            ctx.strokeStyle = '#9c27b0';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            data.forEach((val, i) => {
+                const x = padding + stepX * i;
+                const y = padding + chartHeight - (val / maxVal) * chartHeight;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+            
+            // 포인트 그리기
+            ctx.fillStyle = '#9c27b0';
+            data.forEach((val, i) => {
+                const x = padding + stepX * i;
+                const y = padding + chartHeight - (val / maxVal) * chartHeight;
+                ctx.beginPath();
+                ctx.arc(x, y, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(x, y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#9c27b0';
+            });
+            
+            // 라벨
+            ctx.fillStyle = '#666';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'center';
+            days.forEach((day, i) => {
+                const x = padding + stepX * i;
+                ctx.fillText(day, x, height - 15);
+            });
+            
+            // 제목
+            ctx.fillStyle = '#6a1b9a';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillText('총 쿠키: ' + (data[data.length - 1] || 0) + '개', width / 2, 25);
+        }
+        
+        function renderClassStats() {
+            const container = document.getElementById('classStats');
+            if (!container) return;
+            
+            const prevTotals = JSON.parse(localStorage.getItem('prev_api_totals') || '{}');
+            let totalCookies = 0;
+            let topStudent = null;
+            let topCount = 0;
+            
+            studentData.forEach(s => {
+                const count = prevTotals[s.code] || 0;
+                totalCookies += count;
+                if (count > topCount) {
+                    topCount = count;
+                    topStudent = s.name;
+                }
+            });
+            
+            const avgCookies = studentData.length > 0 ? Math.floor(totalCookies / studentData.length) : 0;
+            const goalProgress = cookieGoal > 0 ? Math.min(100, Math.floor((totalCookies / cookieGoal) * 100)) : 0;
+            
+            container.innerHTML = `
+                <div style="margin-bottom:15px; padding:10px; background:#f3e5f5; border-radius:10px;">
+                    <b style="font-size:1.3rem; color:#6a1b9a;">📊 전체 현황</b><br>
+                    총 쿠키: <b style="color:#9c27b0; font-size:1.5rem;">${totalCookies}</b>개<br>
+                    목표 달성률: <b style="color:#9c27b0; font-size:1.5rem;">${goalProgress}%</b>
+                </div>
+                <div style="margin-bottom:15px; padding:10px; background:#fff9c4; border-radius:10px;">
+                    <b style="font-size:1.3rem; color:#f57f17;">👑 최고 듀오</b><br>
+                    ${topStudent ? topStudent + ' 학생 (' + topCount + '개)' : '데이터 없음'}
+                </div>
+                <div style="padding:10px; background:#e3f2fd; border-radius:10px;">
+                    <b style="font-size:1.3rem; color:#1976d2;">📈 평균</b><br>
+                    1인당 평균: <b style="color:#1976d2; font-size:1.5rem;">${avgCookies}</b>개
+                </div>
+            `;
+        }
+        
+        function renderSubjectChart() {
+            const canvas = document.getElementById('subjectChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            ctx.clearRect(0, 0, width, height);
+            
+            // 과목별 출현 횟수 계산
+            const subjectCounts = {};
+            const dNames = ["월","화","수","목","금"];
+            dNames.forEach(day => {
+                const tt = weeklyTT[day] || [];
+                tt.forEach(period => {
+                    const subj = period.s || '-';
+                    if (subj !== '-' && subj !== '') {
+                        subjectCounts[subj] = (subjectCounts[subj] || 0) + 1;
+                    }
+                });
+            });
+            
+            // 상위 5개 과목만 표시
+            const sorted = Object.entries(subjectCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            
+            if (sorted.length === 0) {
+                ctx.fillStyle = '#999';
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('데이터가 없습니다', width / 2, height / 2);
+                return;
+            }
+            
+            const maxVal = sorted[0][1];
+            const barWidth = (width - 80) / sorted.length - 20;
+            const chartHeight = height - 80;
+            
+            // 막대 그래프 그리기
+            sorted.forEach(([subj, count], i) => {
+                const x = 60 + i * (barWidth + 20);
+                const barHeight = (count / maxVal) * chartHeight;
+                const y = height - 50 - barHeight;
+                
+                // 그라데이션 색상
+                const gradient = ctx.createLinearGradient(x, y, x, height - 50);
+                gradient.addColorStop(0, '#ff9800');
+                gradient.addColorStop(1, '#f57c00');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(x, y, barWidth, barHeight);
+                
+                // 테두리
+                ctx.strokeStyle = '#e65100';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, y, barWidth, barHeight);
+                
+                // 과목명
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 13px sans-serif';
+                ctx.textAlign = 'center';
+                const icon = subIcons[subj] || '⭐';
+                ctx.fillText(icon + ' ' + subj, x + barWidth / 2, height - 25);
+                
+                // 수치
+                ctx.fillStyle = '#666';
+                ctx.font = 'bold 16px sans-serif';
+                ctx.fillText(count + '교시', x + barWidth / 2, y - 8);
+            });
+            
+            // 제목
+            ctx.fillStyle = '#6a1b9a';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillText('주간 과목 분포 (상위 5개)', width / 2, 20);
+        }
+        
+        function renderGardenStats() {
+            const container = document.getElementById('gardenStats');
+            if (!container) return;
+            
+            const status = calculateGardenHealth();
+            const totals = status.totals;
+            
+            container.innerHTML = `
+                <div style="margin-bottom:15px; padding:10px; background:#f3e5f5; border-radius:10px;">
+                    <b style="font-size:1.3rem; color:#6a1b9a;">🌸 정원 현황</b><br>
+                    총 곤충: <b style="color:#9c27b0; font-size:1.5rem;">${totals.total}</b>마리
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+                    <div style="padding:8px; background:#fff9c4; border-radius:8px; text-align:center;">
+                        <div style="font-size:1.5rem;">🌸</div>
+                        <div style="font-size:0.9rem; color:#666;">수분매개</div>
+                        <b style="color:#4caf50; font-size:1.3rem;">${totals.pollinator}</b>
+                    </div>
+                    <div style="padding:8px; background:#ffebee; border-radius:8px; text-align:center;">
+                        <div style="font-size:1.5rem;">🐞</div>
+                        <div style="font-size:0.9rem; color:#666;">천적곤충</div>
+                        <b style="color:#f44336; font-size:1.3rem;">${totals.predator}</b>
+                    </div>
+                    <div style="padding:8px; background:#e8f5e9; border-radius:8px; text-align:center;">
+                        <div style="font-size:1.5rem;">🪱</div>
+                        <div style="font-size:0.9rem; color:#666;">분해동물</div>
+                        <b style="color:#8bc34a; font-size:1.3rem;">${totals.decomposer}</b>
+                    </div>
+                    <div style="padding:8px; background:#e3f2fd; border-radius:8px; text-align:center;">
+                        <div style="font-size:1.5rem;">🐛</div>
+                        <div style="font-size:0.9rem; color:#666;">초식곤충</div>
+                        <b style="color:#2196f3; font-size:1.3rem;">${totals.herbivore}</b>
+                    </div>
+                </div>
+                <div style="padding:10px; background:#fff3e0; border-radius:10px;">
+                    <b style="font-size:1.1rem; color:#ff9800;">🌱 토양 건강도</b><br>
+                    ${getGardenHealthMessage(totals)}
+                </div>
+            `;
+        }
+        
+        function getGardenHealthMessage(totals) {
+            const total = totals.total || 0;
+            const pollinator = totals.pollinator || 0;
+            const decomposer = totals.decomposer || 0;
+            
+            if (total === 0) return '아직 곤충이 없어요. 쿠키를 모아서 곤충을 불러오세요! 🥚';
+            if (pollinator === 0) return '꽃가루를 옮길 곤충이 필요해요. 나비나 벌을 키워보세요! 🦋';
+            if (decomposer === 0) return '토양을 비옥하게 할 지렁이/달팽이가 필요해요! 🪱';
+            if (pollinator >= 3 && decomposer >= 2) return '완벽한 생태계! 🌟 정원이 매우 건강합니다!';
+            if (pollinator >= 2) return '좋아요! 🌿 꽃들이 활짝 피고 있습니다.';
+            return '🌱 정원이 자라고 있어요. 더 많은 곤충을 초대해보세요!';
+        }
 
         function checkLunchEvent(now) {
             const curTimeNum = now.getHours() * 100 + now.getMinutes(); 
