@@ -58,6 +58,8 @@ let viewDate = new Date();
         let lunchResultShown = false;
         let rouletteAutoOpened = false;
         const STORAGE_KEY = '3_5_science_garden_v2';
+        const SUPER_CHANCE_KEY = 'superChanceBonus_v1';
+        const SUPER_CHANCE_RESET_KEY = 'superChanceReset_v1';
 
         let gameData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
         let currentAPI_Totals = {};
@@ -839,8 +841,18 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
     const grid = document.getElementById('cookie-grid'); 
     grid.innerHTML = ''; 
 
+    // 슈퍼찬스 데이터 확인
+    const superChanceData = JSON.parse(localStorage.getItem(SUPER_CHANCE_KEY) || 'null');
+    const isSuperChanceActive = superChanceData && superChanceData.date === toLocalDateStr(new Date());
+
     studentData.forEach(s => { 
-        const totalCount = currentAPI_Totals[s.code] || 0; 
+        let totalCount = currentAPI_Totals[s.code] || 0; 
+        
+        // 슈퍼찬스가 활성화되어 있으면 보너스 점수 적용
+        if (isSuperChanceActive && superChanceData.data[s.code]) {
+            totalCount = superChanceData.data[s.code].total;
+        }
+        
         if (!gameData[s.code]) gameData[s.code] = { ackTotal: 0, garden: [], currentBug: null }; 
         
         const data = gameData[s.code]; 
@@ -908,6 +920,12 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
                 iconHtml = '🦋';
             }
         }
+        
+        // 슈퍼찬스 표시 추가
+        let superChanceHtml = '';
+        if (isSuperChanceActive && superChanceData.data[s.code] && superChanceData.data[s.code].bonus > 0) {
+            superChanceHtml = `<div style="font-size:0.85rem; color:#ff9800; font-weight:bold;">⭐ +${superChanceData.data[s.code].bonus} 보너스!</div>`;
+        }
 
         const nowMs = Date.now();
         const oneHour = 60 * 60 * 1000;
@@ -935,6 +953,7 @@ card.innerHTML = `
         ${statusHtml}  ${iconHtml}
     </div>
     <div style="font-size:1rem; color:#ef6c00;">🍪 ${currentCookies}</div>
+    ${superChanceHtml}
 `;
 
         if(canEvo) {
@@ -1487,6 +1506,13 @@ function importStudentData(event) {
                 clearLucky369Effect();
                 if (finalEvent.isLucky369) applyLucky369Effect();
                 saveTodayRoulette({ index: targetIndex, title: finalEvent.title, alert: finalEvent.alert, isLucky369: !!finalEvent.isLucky369 });
+                
+                // 슈퍼찬스 체크 (초록색 칸이면서 10% 확률)
+                const isGreenSquare = finalEvent.label && finalEvent.label.includes('🍀');
+                if (isGreenSquare && Math.random() < 0.1) {
+                    activateSuperChance();
+                }
+                
                 const resultDisplay = document.getElementById('rouletteResultDisplay');
                 if (resultDisplay) {
                     resultDisplay.innerHTML = `<div style="font-size:2rem; margin:20px 0; padding:20px; background:${finalEvent.color}; color:white; border-radius:15px; text-align:center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">${finalEvent.title}</div>`;
@@ -1495,6 +1521,48 @@ function importStudentData(event) {
                 markRouletteComplete(finalEvent);
                 resetSpinBtnToClose();
             }, 4100);
+        }
+        
+        function activateSuperChance() {
+            // 슈퍼찬스 발동! 모든 학생 점수를 10의 자리로 올림
+            const superChanceData = {};
+            let bonusApplied = false;
+            
+            studentData.forEach(s => {
+                const actualScore = currentAPI_Totals[s.code] || 0;
+                const roundedScore = Math.ceil(actualScore / 10) * 10;
+                
+                if (roundedScore > actualScore) {
+                    superChanceData[s.code] = {
+                        original: actualScore,
+                        bonus: roundedScore - actualScore,
+                        total: roundedScore
+                    };
+                    bonusApplied = true;
+                } else {
+                    superChanceData[s.code] = {
+                        original: actualScore,
+                        bonus: 0,
+                        total: actualScore
+                    };
+                }
+            });
+            
+            if (bonusApplied) {
+                localStorage.setItem(SUPER_CHANCE_KEY, JSON.stringify({
+                    date: toLocalDateStr(new Date()),
+                    data: superChanceData
+                }));
+                localStorage.setItem(SUPER_CHANCE_RESET_KEY, toLocalDateStr(new Date()));
+                
+                // 알림 표시
+                showMarqueeMessage('🌟 슈퍼 찬스 발동! 🌟 모든 학생의 점수가 10의 자리로 올랐습니다! 생태 도감이 업데이트되었어요!', 10000);
+                playAlarmSound('celebration');
+                
+                // 생태 도감 다시 렌더링
+                renderBugGrid();
+                renderGarden();
+            }
         }
 
         init();
