@@ -61,8 +61,6 @@ let viewDate = new Date();
 
         let gameData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
         let currentAPI_Totals = {};
-        let superChanceBonus = JSON.parse(localStorage.getItem('superChanceBonus_v1')) || {};
-        
         let cookieEarnDates = JSON.parse(localStorage.getItem('cookieEarnDates_v1')) || {};
         let isFirstSync = true;
 
@@ -230,24 +228,11 @@ let viewDate = new Date();
                 setTimeout(function() { el.remove(); }, 4000);
             }
         }
-        function spawnSuperConfetti() {
-            const colors = ['#FFD700', '#FFCC00', '#FFB300', '#F9A602', '#E6B800'];
-            const emojis = ['✨', '⭐', '💰', '👑', '📀', '💎'];
-            for (let i = 0; i < 120; i++) {
-                const el = document.createElement('div');
-                el.className = 'confetti-piece';
-                el.innerText = emojis[i % emojis.length];
-                el.style.color = colors[Math.floor(Math.random() * colors.length)];
-                el.style.left = Math.random() * 100 + 'vw';
-                el.style.fontSize = (Math.random() * 1.5 + 1.5) + 'rem';
-                el.style.animationDuration = (Math.random() * 3 + 2) + 's';
-                el.style.animationDelay = (Math.random() * 4) + 's';
-                document.body.appendChild(el);
-                setTimeout(function() { el.remove(); }, 6000);
-            }
-        }
-
         async function init() {
+            // 슈퍼찬스 관련 localStorage 데이터 초기화
+            localStorage.removeItem('superChanceBonus_v1');
+            localStorage.removeItem('superChanceReset_v1');
+            
             document.getElementById('alarmSound').src = alarmSoundUrl;
             applySoundVolume();
             setupRouletteUI();
@@ -255,7 +240,6 @@ let viewDate = new Date();
             restoreRouletteState();
             await syncCookies();
             renderAll(); fetchWeather(); fetchMeal(); drawGardenBackground();
-            fixTodaySuperChanceIfNeeded();
             setInterval(function() {
                 const now = new Date();
                 checkDateTransition(now);
@@ -340,9 +324,8 @@ let viewDate = new Date();
                             localStorage.setItem('cookieEarnDates_v1', JSON.stringify(cookieEarnDates));
                         }
                         prevTotals[s.code] = current; 
-                        const bonus = superChanceBonus[s.code] || 0;
-                        currentAPI_Totals[s.code] = current + bonus; 
-                        grandTotal += (current + bonus); 
+                        currentAPI_Totals[s.code] = current; 
+                        grandTotal += current; 
                     }
                 } catch(e) {}
             }));
@@ -627,14 +610,6 @@ let viewDate = new Date();
             document.getElementById('break1-text').value = routineMsgs.break1; 
             document.getElementById('home-mission-text').value = homeMissionText;
             loadSoundSettingsUI();
-            
-            // 슈퍼찬스 버튼을 설정창에 표시
-            const superChanceArea = document.getElementById('super-chance-area');
-            if (superChanceArea) {
-                const saved = getTodayRoulette();
-                const isSuperChance = saved && saved.index >= 0 && saved.index < wheelItems.length && wheelItems[saved.index].color === "#4caf50";
-                superChanceArea.style.display = isSuperChance ? 'block' : 'none';
-            }
             
             document.getElementById('routineConfigModal').style.display = 'flex'; 
         }
@@ -980,49 +955,6 @@ card.innerHTML = `
             else if (rem === 0) { const bugToGarden = data.currentBug || {icon:'🦋', name:'나비'}; data.garden.push(bugToGarden); data.currentBug = null; showMarqueeMessage('🌸 ' + student.name + ' 학생의 [' + bugToGarden.name + '] 이(가) 정원으로 날아갔어요! 새로운 알을 발견했어요! 🥚', 60000); renderGarden(); }
             playAlarmSound('celebration');
             localStorage.setItem(STORAGE_KEY, JSON.stringify(gameData)); renderBugGrid();
-        }
-
-        function applySuperChance() {
-            const increments = {};
-            studentData.forEach(s => {
-                const data = gameData[s.code];
-                if (!data) return;
-                const oldTotal = data.ackTotal;
-                let nextMilestone = (Math.floor(data.ackTotal / 10) + 1) * 10;
-                increments[s.code] = nextMilestone - oldTotal;
-                data.ackTotal = nextMilestone;
-                if (!currentAPI_Totals[s.code]) currentAPI_Totals[s.code] = 0;
-                currentAPI_Totals[s.code] = nextMilestone;
-                // syncCookies()가 덮어쓰지 않도록 superChanceBonus에 저장
-                const actualAPI = parseInt(localStorage.getItem('prev_api_totals') ? JSON.parse(localStorage.getItem('prev_api_totals'))[s.code] : 0) || 0;
-                superChanceBonus[s.code] = nextMilestone - actualAPI;
-                const finalRem = nextMilestone % 100;
-                if (finalRem === 90 && !data.currentBug) {
-                    data.currentBug = bugPool[Math.floor(Math.random() * bugPool.length)];
-                } else if (finalRem === 0) {
-                    const bugToGarden = data.currentBug || {icon:'🦋', name:'나비'};
-                    data.garden.push(bugToGarden);
-                    data.currentBug = null;
-                }
-            });
-            localStorage.setItem('superChanceBonus_v1', JSON.stringify(superChanceBonus));
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(gameData));
-            renderBugGrid(); renderGarden();
-            spawnSuperConfetti();
-            const cards = document.querySelectorAll('.cookie-individual');
-            studentData.forEach((s, idx) => {
-                const card = cards[idx];
-                const inc = increments[s.code];
-                if (card && inc > 0) {
-                    const upText = document.createElement('div');
-                    upText.className = 'floating-up-text';
-                    upText.innerText = `+${inc} ✨`;
-                    card.appendChild(upText);
-                    setTimeout(() => upText.remove(), 2000);
-                }
-            });
-            showMarqueeMessage('🌈 [슈퍼 찬스 당첨!] 모든 학생의 쿠키가 다음 십의 자리로 올림되었습니다! 🌈', 15000);
-            playAlarmSound('celebration');
         }
 
         function renderGarden() {
@@ -1483,86 +1415,6 @@ function importStudentData(event) {
             drawRouletteWheel();
         }
 
-        function openSuperChanceChallenge() {
-            if (document.getElementById('superChallengeOverlay')) {
-                document.getElementById('superChallengeOverlay').style.display = 'flex';
-            } else {
-                const html = `
-                <div class="super-challenge-overlay" id="superChallengeOverlay">
-                    <div class="challenge-box">
-                        <h1 style="font-size:3rem; color:#ef6c00;">🌈 보너스 슈퍼 찬스 도전!</h1>
-                        <p style="font-size:1.5rem;">10개의 상자 중 단 하나에 황금 쿠키가 들어있습니다!</p>
-                        <div class="chance-visualizer" id="chanceVisualizer"></div>
-                        <button class="roulette-spin-btn" id="startChallengeBtn" onclick="runSuperChanceAttempt()" style="font-size:2rem; padding:20px 60px;">상자 열기!</button>
-                    </div>
-                </div>`;
-                document.body.insertAdjacentHTML('beforeend', html);
-                document.getElementById('superChallengeOverlay').style.display = 'flex';
-            }
-            const container = document.getElementById('chanceVisualizer');
-            container.innerHTML = '';
-            for (let i = 0; i < 10; i++) {
-                container.innerHTML += `<div class="chance-slot" id="slot-${i}">🎁</div>`;
-            }
-            document.getElementById('startChallengeBtn').disabled = false;
-            document.getElementById('startChallengeBtn').innerText = '상자 열기!';
-        }
-
-        function runSuperChanceAttempt() {
-            const btn = document.getElementById('startChallengeBtn');
-            btn.disabled = true;
-            btn.innerText = '두근두근...';
-            const winIdx = Math.floor(Math.random() * 10);
-            const isWin = (winIdx === 0);
-            let current = 0;
-            let loops = 0;
-            const interval = setInterval(() => {
-                document.querySelectorAll('.chance-slot').forEach(s => s.classList.remove('active'));
-                document.getElementById(`slot-${current}`).classList.add('active');
-                current = (current + 1) % 10;
-                if (current === 0) loops++;
-                if (loops >= 3 && current === winIdx) {
-                    clearInterval(interval);
-                    finishChallenge(isWin, winIdx);
-                }
-            }, 100);
-        }
-
-        function resetSpinBtnToClose() {
-            isWheelSpinning = false;
-            const spinBtn = document.getElementById('spinActionBtn');
-            if (spinBtn) {
-                spinBtn.disabled = false;
-                spinBtn.innerText = '✖️ 닫기';
-                spinBtn.style.background = '#f44336';
-                spinBtn.onclick = closeRouletteModal;
-            }
-        }
-
-        function finishChallenge(isWin, winIdx) {
-            const slots = document.querySelectorAll('.chance-slot');
-            slots.forEach(s => s.classList.remove('active'));
-            const resultSlot = document.getElementById('slot-' + winIdx);
-            if (isWin) {
-                resultSlot.innerHTML = '<span class="slot-gold">✨</span>';
-                resultSlot.classList.add('winner');
-                setTimeout(() => {
-                    applySuperChance();
-                    document.getElementById('superChallengeOverlay').style.display = 'none';
-                    resetSpinBtnToClose();
-                    closeRouletteModal();
-                }, 1500);
-            } else {
-                resultSlot.innerHTML = '❌';
-                setTimeout(() => {
-                    alert("아쉽습니다! 다음 기회에...");
-                    document.getElementById('superChallengeOverlay').style.display = 'none';
-                    resetSpinBtnToClose();
-                    closeRouletteModal();
-                }, 1000);
-            }
-        }
-
         function drawRouletteWheel() {
             const canvas = document.getElementById('rouletteCanvas');
             if (!canvas) return;
@@ -1609,88 +1461,13 @@ function importStudentData(event) {
         }
         function checkTodayDraw() {
             const saved = getTodayRoulette();
-            const resetBtn = document.getElementById('superChanceResetBtn');
-            const forceBtn = document.getElementById('forceSuperChanceBtn');
             if (saved) {
                 alert('🎰 오늘의 뽑기 결과\n\n' + escapeHtml(saved.title) + '\n\n📢 알림:\n' + escapeHtml(saved.alert));
-                const isSuperChance = saved.index >= 0 && saved.index < wheelItems.length && wheelItems[saved.index].color === "#4caf50";
-                if (resetBtn) resetBtn.style.display = isSuperChance ? 'block' : 'none';
-                if (forceBtn) forceBtn.style.display = isSuperChance ? 'block' : 'none';
             } else {
                 alert('아직 오늘의 뽑기가 진행되지 않았습니다.\n대시보드에서 뽑기를 실행해주세요!');
-                if (resetBtn) resetBtn.style.display = 'none';
-                if (forceBtn) forceBtn.style.display = 'none';
             }
         }
         
-        async function resetSuperChance() {
-            const pwd = prompt('슈퍼찬스 초기화를 위해 비밀번호를 입력하세요.');
-            if (pwd !== '369369') {
-                alert('비밀번호가 틀렸습니다.');
-                return;
-            }
-            if (!confirm('슈퍼찬스 보너스를 초기화하시겠습니까?\n\n모든 학생의 슈퍼찬스 보너스가 삭제되고,\n다음 뽑기에서 새로 적용됩니다.')) {
-                return;
-            }
-            superChanceBonus = {};
-            localStorage.removeItem('superChanceBonus_v1');
-            await syncCookies();
-            studentData.forEach(s => {
-                if (gameData[s.code]) {
-                    const currentTotal = currentAPI_Totals[s.code] || 0;
-                    gameData[s.code].ackTotal = currentTotal;
-                }
-            });
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(gameData));
-            localStorage.removeItem('roulette_daily_v1');
-            localStorage.setItem('superChanceReset_v1', 'true');
-            closeAllModals();
-            showMarqueeMessage('🔄 슈퍼찬스 보너스가 초기화되었습니다.', 5000);
-        }
-        
-        function forceApplySuperChance() {
-            const pwd = prompt('슈퍼찬스 강제 적용을 위해 비밀번호를 입력하세요.');
-            if (pwd !== '369369') {
-                alert('비밀번호가 틀렸습니다.');
-                return;
-            }
-            if (!confirm('슈퍼찬스를 강제로 적용하시겠습니까?\n\n모든 학생의 쿠키가 다음 10의 자리로 올림됩니다.\n예: 1→10, 35→40, 91→100')) {
-                return;
-            }
-            applySuperChance();
-            closeAllModals();
-        }
-        
-        function fixTodaySuperChanceIfNeeded() {
-            if (localStorage.getItem('superChanceReset_v1')) {
-                localStorage.removeItem('superChanceReset_v1');
-                return;
-            }
-            const saved = getTodayRoulette();
-            if (!saved) return;
-            const isSuperChanceEvent = saved.index >= 0 && saved.index < wheelItems.length && wheelItems[saved.index].color === "#4caf50";
-            if (!isSuperChanceEvent) return;
-            const hasBonus = studentData.some(s => superChanceBonus[s.code] && superChanceBonus[s.code] > 0);
-            if (hasBonus) return;
-            let needsFix = false;
-            studentData.forEach(s => {
-                const data = gameData[s.code];
-                if (!data) return;
-                const oldTotal = data.ackTotal;
-                const nextMilestone = (Math.floor(oldTotal / 10) + 1) * 10;
-                const bonus = nextMilestone - oldTotal;
-                if (bonus > 0) {
-                    superChanceBonus[s.code] = bonus;
-                    needsFix = true;
-                }
-            });
-            if (needsFix) {
-                localStorage.setItem('superChanceBonus_v1', JSON.stringify(superChanceBonus));
-                console.log('✅ 오늘 슈퍼찬스 보너스가 복구되었습니다.');
-                showMarqueeMessage('✅ 오늘 슈퍼찬스 보너스가 자동으로 적용되었습니다!', 5000);
-            }
-        }
-
         function spinRouletteWheel() {
             if (isWheelSpinning || getTodayRoulette()) return;
             isWheelSpinning = true;
@@ -1714,13 +1491,6 @@ function importStudentData(event) {
                 if (resultDisplay) {
                     resultDisplay.innerHTML = `<div style="font-size:2rem; margin:20px 0; padding:20px; background:${finalEvent.color}; color:white; border-radius:15px; text-align:center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">${finalEvent.title}</div>`;
                     resultDisplay.style.display = 'block';
-                }
-                if (finalEvent.color === "#4caf50") {
-                    spinBtn.innerText = '🌈 슈퍼 찬스 도전하기!';
-                    spinBtn.style.background = '#ff9800';
-                    spinBtn.onclick = () => { openSuperChanceChallenge(); closeRouletteModal(); };
-                    spinBtn.disabled = false;
-                    return;
                 }
                 markRouletteComplete(finalEvent);
                 resetSpinBtnToClose();
