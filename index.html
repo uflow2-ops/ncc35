@@ -243,29 +243,17 @@
             <span style="cursor:pointer;">닫기 ✖</span>
         </div>
         <div style="flex:1; overflow-y:auto; padding:20px;">
-            <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:20px; max-width:1400px; margin:0 auto;">
-                <!-- 학생별 쿠키 획득 추이 -->
-                <div class="card" style="background:white; padding:20px;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; max-width:1600px; margin:0 auto;">
+                <!-- 학생별 쿠키 획득 추이 (크게) -->
+                <div class="card" style="background:white; padding:20px; grid-column: span 2;">
                     <h3 style="margin-top:0; color:#6a1b9a;">🍪 학생별 쿠키 획득 추이 (최근 7일)</h3>
-                    <canvas id="cookieTrendChart" width="400" height="250"></canvas>
+                    <canvas id="cookieTrendChart" width="1200" height="300"></canvas>
                 </div>
                 
                 <!-- 반 전체 통계 -->
-                <div class="card" style="background:white; padding:20px;">
+                <div class="card" style="background:white; padding:20px; grid-column: span 2;">
                     <h3 style="margin-top:0; color:#6a1b9a;">📈 반 전체 쿠키 통계</h3>
                     <div id="classStats" style="font-size:1.2rem; text-align:left; padding:10px;"></div>
-                </div>
-                
-                <!-- 과목별 참여도 -->
-                <div class="card" style="background:white; padding:20px;">
-                    <h3 style="margin-top:0; color:#6a1b9a;">📚 시간표 과목 분포</h3>
-                    <canvas id="subjectChart" width="400" height="250"></canvas>
-                </div>
-                
-                <!-- 생태 정원 통계 -->
-                <div class="card" style="background:white; padding:20px;">
-                    <h3 style="margin-top:0; color:#6a1b9a;">🌸 생태 정원 현황</h3>
-                    <div id="gardenStats" style="font-size:1.2rem; text-align:left; padding:10px;"></div>
                 </div>
             </div>
         </div>
