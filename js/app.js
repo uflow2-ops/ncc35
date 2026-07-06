@@ -1402,6 +1402,14 @@ card.innerHTML = `
             const barWidth = chartWidth / days.length * 0.7;
             const barSpacing = chartWidth / days.length;
             
+            // 학생별 최대값 계산 (꺾은선그래프용)
+            const studentMaxVal = Math.max(
+                ...Object.values(dailyStudentData).flatMap(dayData => 
+                    Object.values(dayData).filter(v => v > 0)
+                ),
+                1
+            );
+            
             // 배경 그리드
             ctx.strokeStyle = '#e0e0e0';
             ctx.lineWidth = 1;
@@ -1411,6 +1419,24 @@ card.innerHTML = `
                 ctx.moveTo(padding, y);
                 ctx.lineTo(width - padding, y);
                 ctx.stroke();
+            }
+            
+            // 왼쪽 y축 (막대그래프 - 총 획득량)
+            ctx.fillStyle = '#666';
+            ctx.font = '11px sans-serif';
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= 5; i++) {
+                const val = Math.round((maxVal / 5) * (5 - i));
+                const y = padding + (chartHeight / 5) * i;
+                ctx.fillText(val + '개', padding - 5, y + 4);
+            }
+            
+            // 오른쪽 y축 (꺾은선그래프 - 학생별)
+            ctx.textAlign = 'left';
+            for (let i = 0; i <= 5; i++) {
+                const val = Math.round((studentMaxVal / 5) * (5 - i));
+                const y = padding + (chartHeight / 5) * i;
+                ctx.fillText(val + '개', width - padding + 5, y + 4);
             }
             
             // 막대 그래프 (총 획득량)
@@ -1477,7 +1503,7 @@ card.innerHTML = `
                 trend.forEach((val, dayIndex) => {
                     if (val > 0 || dayIndex === 0 || dayIndex === 4) {
                         const x = padding + dayIndex * barSpacing + barSpacing / 2;
-                        const y = padding + chartHeight - (val / maxVal) * chartHeight;
+                        const y = padding + chartHeight - (val / studentMaxVal) * chartHeight;
                         
                         if (dayIndex === 0) {
                             ctx.moveTo(x, y);
@@ -1493,7 +1519,7 @@ card.innerHTML = `
                 trend.forEach((val, dayIndex) => {
                     if (val > 0) {
                         const x = padding + dayIndex * barSpacing + barSpacing / 2;
-                        const y = padding + chartHeight - (val / maxVal) * chartHeight;
+                        const y = padding + chartHeight - (val / studentMaxVal) * chartHeight;
                         
                         ctx.fillStyle = color;
                         ctx.beginPath();
@@ -1547,7 +1573,7 @@ card.innerHTML = `
             ctx.font = '11px sans-serif';
             ctx.fillText('● 막대: 일일 총계  ─ 선: 학생별 추이  ─  클릭하면 상세 정보', width / 2, 45);
             
-            canvas.chartData = { days, dailyTotals, dailyStudentData, padding, barWidth, barSpacing, chartHeight, maxVal };
+            canvas.chartData = { days, dailyTotals, dailyStudentData, padding, barWidth, barSpacing, chartHeight, maxVal, studentMaxVal };
         }
         
         function handleChartClick(event) {
