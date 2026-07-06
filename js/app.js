@@ -1534,32 +1534,44 @@ card.innerHTML = `
                 });
             });
             
-            // 범례 (상위 5명만 표시)
-            const topStudents = Object.entries(studentTrends)
-                .map(([code, trend]) => ({
-                    code,
-                    name: studentData.find(s => s.code === code)?.name || 'Unknown',
-                    total: trend.reduce((sum, val) => sum + val, 0)
-                }))
-                .sort((a, b) => b.total - a.total)
-                .slice(0, 5);
-            
-            if (topStudents.length > 0) {
-                const legendY = height - 35;
-                ctx.font = '11px sans-serif';
-                ctx.textAlign = 'left';
+            // 학생별 이름 표시 (선 위에)
+            Object.keys(studentTrends).forEach((code) => {
+                const trend = studentTrends[code];
+                const hasData = trend.some(val => val > 0);
+                if (!hasData) return;
                 
-                topStudents.forEach((student, index) => {
-                    const x = padding + index * 80;
-                    const color = studentColors[student.code];
+                const student = studentData.find(s => s.code === code);
+                if (!student) return;
+                
+                const color = studentColors[code];
+                
+                // 마지막 데이터 포인트 위치 찾기
+                let lastVal = 0;
+                let lastIndex = -1;
+                for (let i = trend.length - 1; i >= 0; i--) {
+                    if (trend[i] > 0) {
+                        lastVal = trend[i];
+                        lastIndex = i;
+                        break;
+                    }
+                }
+                
+                if (lastIndex >= 0) {
+                    const x = padding + lastIndex * barSpacing + barSpacing / 2;
+                    const y = padding + chartHeight - (lastVal / studentMaxVal) * chartHeight;
                     
+                    // 이름 배경 (가독성 향상)
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    const textWidth = ctx.measureText(student.name).width;
+                    ctx.fillRect(x - textWidth/2 - 3, y - 22, textWidth + 6, 16);
+                    
+                    // 이름 표시
                     ctx.fillStyle = color;
-                    ctx.fillRect(x, legendY - 8, 12, 3);
-                    
-                    ctx.fillStyle = '#666';
-                    ctx.fillText(student.name, x + 15, legendY);
-                });
-            }
+                    ctx.font = 'bold 11px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(student.name, x, y - 10);
+                }
+            });
             
             // 제목
             const weekTotal = dailyTotals.reduce((sum, val) => sum + val, 0);
@@ -1571,7 +1583,7 @@ card.innerHTML = `
             // 안내 메시지
             ctx.fillStyle = '#999';
             ctx.font = '11px sans-serif';
-            ctx.fillText('● 막대: 일일 총계  ─ 선: 학생별 추이  ─  클릭하면 상세 정보', width / 2, 45);
+            ctx.fillText('● 막대: 일일 총계  ─  선: 학생별 추이  ─  클릭하면 상세 정보', width / 2, 45);
             
             canvas.chartData = { days, dailyTotals, dailyStudentData, padding, barWidth, barSpacing, chartHeight, maxVal, studentMaxVal };
         }
