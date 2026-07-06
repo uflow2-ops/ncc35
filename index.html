@@ -37,7 +37,11 @@
                 <div id="clock-ampm" style="font-size: 26px; color: #777; font-weight: bold; margin-bottom:-5px;"></div>
                 <div id="digital-clock" style="font-size: 78px; font-weight: bold; line-height:1;">00:00:00</div>
                 <div id="mini-timer" style="font-size: 24px; color: #e74c3c; font-weight: bold; display: none; margin-top: 5px;"></div>
-                <div id="today-date" style="font-size: 28px; color: #555;">날짜 로딩 중...</div>
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 5px;">
+                    <button onclick="goToPrevDay()" style="background: none; border: none; font-size: 24px; cursor: pointer; padding: 5px; color: #555; transition: 0.2s;" title="어제로">◀</button>
+                    <div id="today-date" style="font-size: 28px; color: #555;">날짜 로딩 중...</div>
+                    <button onclick="goToNextDay()" style="background: none; border: none; font-size: 24px; cursor: pointer; padding: 5px; color: #555; transition: 0.2s;" title="내일로">▶</button>
+                </div>
                 
                 <div id="alarm-msg" style="font-size: 20px; color: var(--alert-red); font-weight: bold; margin-top:5px;"></div>
                 <div id="active-tool-display"></div>

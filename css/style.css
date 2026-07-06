@@ -362,3 +362,15 @@
 
 #notepad-content:focus { outline: none; border-color: #8d6e63; box-shadow: 0 0 15px rgba(141, 110, 99, 0.2); }
 #notepad-content::placeholder { color: #d7ccc8; font-size: 1.5rem; }
+
+/* 날짜 화살표 버튼 스타일 */
+#today-date { min-width: 200px; text-align: center; }
+button[title="어제로"]:hover, button[title="내일로"]:hover {
+    background: rgba(255, 216, 168, 0.3);
+    border-radius: 10px;
+    transform: scale(1.1);
+}
+button[title="어제로"]:active, button[title="내일로"]:active {
+    transform: scale(0.95);
+    background: rgba(255, 216, 168, 0.5);
+}

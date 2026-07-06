@@ -1351,6 +1351,13 @@ card.innerHTML = `
         function renderDataAnalysis() {
             renderCookieTrendChart();
             renderClassStats();
+            
+            const canvas = document.getElementById('cookieTrendChart');
+            if (canvas && !canvas.hasClickHandler) {
+                canvas.hasClickHandler = true;
+                canvas.addEventListener('click', handleChartClick);
+                canvas.style.cursor = 'pointer';
+            }
         }
         
         function renderCookieTrendChart() {
@@ -1361,29 +1368,39 @@ card.innerHTML = `
             const height = canvas.height;
             ctx.clearRect(0, 0, width, height);
             
-            // 최근 7일 데이터 수집
+            // 최근 5일 (주말 제외) 데이터 수집
             const days = [];
             const dailyTotals = [];
+            const dailyStudentData = [];
             const today = new Date();
             
-            for (let i = 6; i >= 0; i--) {
+            let collectedDays = 0;
+            let i = 0;
+            while (collectedDays < 5 && i < 14) {
                 const d = new Date(today);
                 d.setDate(d.getDate() - i);
-                const dateStr = toLocalDateStr(d);
-                days.push((d.getMonth() + 1) + '/' + d.getDate());
+                const dayOfWeek = d.getDay();
                 
-                // 해당 날짜의 총 획득량 계산
-                const dayTotal = dailyCookieHistory[dateStr] ? 
-                    Object.values(dailyCookieHistory[dateStr]).reduce((sum, val) => sum + val, 0) : 0;
-                dailyTotals.push(dayTotal);
+                if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                    const dateStr = toLocalDateStr(d);
+                    days.unshift((d.getMonth() + 1) + '/' + d.getDate());
+                    
+                    const dayData = dailyCookieHistory[dateStr] || {};
+                    const dayTotal = Object.values(dayData).reduce((sum, val) => sum + val, 0);
+                    dailyTotals.unshift(dayTotal);
+                    dailyStudentData.unshift(dayData);
+                    
+                    collectedDays++;
+                }
+                i++;
             }
             
-            // 차트 그리기
             const padding = 50;
             const chartWidth = width - padding * 2;
             const chartHeight = height - padding * 2;
             const maxVal = Math.max(...dailyTotals, 1);
-            const stepX = chartWidth / (days.length - 1);
+            const barWidth = chartWidth / days.length * 0.7;
+            const barSpacing = chartWidth / days.length;
             
             // 배경 그리드
             ctx.strokeStyle = '#e0e0e0';
@@ -1396,28 +1413,22 @@ card.innerHTML = `
                 ctx.stroke();
             }
             
-            // 막대 그래프로 변경
-            const barWidth = chartWidth / days.length * 0.7;
-            const barSpacing = chartWidth / days.length;
-            
+            // 막대 그래프 (총 획득량)
             dailyTotals.forEach((val, i) => {
                 const x = padding + i * barSpacing + (barSpacing - barWidth) / 2;
                 const barHeight = (val / maxVal) * chartHeight;
                 const y = padding + chartHeight - barHeight;
                 
-                // 그라데이션 막대
                 const gradient = ctx.createLinearGradient(x, y, x, padding + chartHeight);
                 gradient.addColorStop(0, '#9c27b0');
                 gradient.addColorStop(1, '#ce93d8');
                 ctx.fillStyle = gradient;
                 ctx.fillRect(x, y, barWidth, barHeight);
                 
-                // 테두리
                 ctx.strokeStyle = '#6a1b9a';
                 ctx.lineWidth = 2;
                 ctx.strokeRect(x, y, barWidth, barHeight);
                 
-                // 수치 표시
                 if (val > 0) {
                     ctx.fillStyle = '#333';
                     ctx.font = 'bold 13px sans-serif';
@@ -1426,25 +1437,171 @@ card.innerHTML = `
                 }
             });
             
-            // 라벨
-            ctx.fillStyle = '#666';
-            ctx.font = '12px sans-serif';
-            ctx.textAlign = 'center';
-            days.forEach((day, i) => {
-                const x = padding + i * barSpacing + barSpacing / 2;
-                ctx.fillText(day, x, height - 15);
+            // 꺾은선 그래프 (학생별 추이)
+            const studentColors = {};
+            const colorPalette = [
+                '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
+                '#1abc9c', '#e67e22', '#34495e', '#16a085', '#c0392b',
+                '#2980b9', '#27ae60', '#d35400', '#8e44ad', '#f1c40f'
+            ];
+            
+            // 각 학생별로 5일간 데이터 수집
+            const studentTrends = {};
+            dailyStudentData.forEach((dayData, dayIndex) => {
+                Object.entries(dayData).forEach(([code, count]) => {
+                    if (!studentTrends[code]) {
+                        studentTrends[code] = new Array(5).fill(0);
+                    }
+                    studentTrends[code][dayIndex] = count;
+                });
             });
+            
+            // 학생별 꺾은선 그리기
+            Object.keys(studentTrends).forEach((code, index) => {
+                if (!studentColors[code]) {
+                    studentColors[code] = colorPalette[index % colorPalette.length];
+                }
+                
+                const student = studentData.find(s => s.code === code);
+                if (!student) return;
+                
+                const trend = studentTrends[code];
+                const hasData = trend.some(val => val > 0);
+                if (!hasData) return;
+                
+                const color = studentColors[code];
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                trend.forEach((val, dayIndex) => {
+                    if (val > 0 || dayIndex === 0 || dayIndex === 4) {
+                        const x = padding + dayIndex * barSpacing + barSpacing / 2;
+                        const y = padding + chartHeight - (val / maxVal) * chartHeight;
+                        
+                        if (dayIndex === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                });
+                
+                ctx.stroke();
+                
+                // 데이터 포인트 표시
+                trend.forEach((val, dayIndex) => {
+                    if (val > 0) {
+                        const x = padding + dayIndex * barSpacing + barSpacing / 2;
+                        const y = padding + chartHeight - (val / maxVal) * chartHeight;
+                        
+                        ctx.fillStyle = color;
+                        ctx.beginPath();
+                        ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                        ctx.fill();
+                        
+                        ctx.fillStyle = '#fff';
+                        ctx.beginPath();
+                        ctx.arc(x, y, 2, 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+                });
+            });
+            
+            // 범례 (상위 5명만 표시)
+            const topStudents = Object.entries(studentTrends)
+                .map(([code, trend]) => ({
+                    code,
+                    name: studentData.find(s => s.code === code)?.name || 'Unknown',
+                    total: trend.reduce((sum, val) => sum + val, 0)
+                }))
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 5);
+            
+            if (topStudents.length > 0) {
+                const legendY = height - 35;
+                ctx.font = '11px sans-serif';
+                ctx.textAlign = 'left';
+                
+                topStudents.forEach((student, index) => {
+                    const x = padding + index * 80;
+                    const color = studentColors[student.code];
+                    
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x, legendY - 8, 12, 3);
+                    
+                    ctx.fillStyle = '#666';
+                    ctx.fillText(student.name, x + 15, legendY);
+                });
+            }
             
             // 제목
             const weekTotal = dailyTotals.reduce((sum, val) => sum + val, 0);
             ctx.fillStyle = '#6a1b9a';
             ctx.font = 'bold 14px sans-serif';
-            ctx.fillText('최근 7일 획득: ' + weekTotal + '개', width / 2, 25);
+            ctx.textAlign = 'center';
+            ctx.fillText('최근 5일 (주말제외) 획득: ' + weekTotal + '개', width / 2, 25);
             
             // 안내 메시지
             ctx.fillStyle = '#999';
             ctx.font = '11px sans-serif';
-            ctx.fillText('* 일일 획득량이 자동으로 기록됩니다', width / 2, height - 35);
+            ctx.fillText('● 막대: 일일 총계  ─ 선: 학생별 추이  ─  클릭하면 상세 정보', width / 2, 45);
+            
+            canvas.chartData = { days, dailyTotals, dailyStudentData, padding, barWidth, barSpacing, chartHeight, maxVal };
+        }
+        
+        function handleChartClick(event) {
+            const canvas = document.getElementById('cookieTrendChart');
+            if (!canvas || !canvas.chartData) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            const { days, dailyTotals, dailyStudentData, padding, barWidth, barSpacing, chartHeight } = canvas.chartData;
+            
+            if (y < padding || y > padding + chartHeight) return;
+            
+            for (let i = 0; i < days.length; i++) {
+                const barX = padding + i * barSpacing + (barSpacing - barWidth) / 2;
+                if (x >= barX && x <= barX + barWidth && dailyTotals[i] > 0) {
+                    const dayData = dailyStudentData[i];
+                    if (dayData && Object.keys(dayData).length > 0) {
+                        let detailHtml = '<div style="background:white; padding:20px; border-radius:15px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); max-width:400px;">';
+                        detailHtml += '<h3 style="margin:0 0 15px 0; color:#6a1b9a;">📊 ' + days[i] + ' 학생별 쿠키 획득</h3>';
+                        detailHtml += '<div style="display:grid; gap:8px; font-size:1.1rem;">';
+                        
+                        const earnedStudents = Object.entries(dayData)
+                            .map(([code, count]) => {
+                                const student = studentData.find(s => s.code === code);
+                                return student ? { name: student.name, count: count } : null;
+                            })
+                            .filter(s => s !== null)
+                            .sort((a, b) => b.count - a.count);
+                        
+                        earnedStudents.forEach(s => {
+                            detailHtml += '<div style="padding:8px; background:#f3e5f5; border-radius:8px; display:flex; justify-content:space-between;">';
+                            detailHtml += '<span>👤 ' + escapeHtml(s.name) + '</span>';
+                            detailHtml += '<b style="color:#9c27b0;">🍪 ' + s.count + '개</b>';
+                            detailHtml += '</div>';
+                        });
+                        
+                        detailHtml += '</div>';
+                        detailHtml += '<button onclick="this.closest(\'div\').remove()" style="margin-top:15px; padding:8px 20px; background:#9c27b0; color:white; border:none; border-radius:8px; cursor:pointer; font-size:1rem;">닫기</button>';
+                        detailHtml += '</div>';
+                        
+                        const overlay = document.createElement('div');
+                        overlay.style.cssText = 'position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:10000;';
+                        overlay.innerHTML = detailHtml;
+                        document.body.appendChild(overlay);
+                        
+                        overlay.addEventListener('click', function(e) {
+                            if (e.target === overlay) overlay.remove();
+                        });
+                    }
+                    break;
+                }
+            }
         }
         
         function renderClassStats() {
