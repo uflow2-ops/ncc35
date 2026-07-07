@@ -1534,6 +1534,7 @@ card.innerHTML = `
                 });
             });
             
+            
             // 학생별 이름 표시 (선 위에)
             Object.keys(studentTrends).forEach((code) => {
                 const trend = studentTrends[code];
@@ -1907,7 +1908,13 @@ function importStudentData(event) {
                     resultDisplay.style.display = 'block';
                 }
                 markRouletteComplete(finalEvent);
-                resetSpinBtnToClose();
+                isWheelSpinning = false;
+                const spinBtn = document.getElementById('spinActionBtn');
+                if (spinBtn) {
+                    spinBtn.disabled = false;
+                    spinBtn.innerText = '✨ 돌리기 ✨';
+                    spinBtn.onclick = closeRouletteModal;
+                }
             }, 4100);
         }
         
