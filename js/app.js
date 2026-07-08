@@ -861,7 +861,7 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
         let totalCount = currentAPI_Totals[s.code] || 0; 
         
         // 슈퍼찬스가 활성화되어 있으면 보너스 점수 적용
-        if (isSuperChanceActive && superChanceData.data[s.code]) {
+        if (isSuperChanceActive && superChanceData.data && superChanceData.data[s.code]) {
             totalCount = superChanceData.data[s.code].total;
         }
         
@@ -1187,22 +1187,22 @@ card.innerHTML = `
             }
             else if (diff <= 61 && diff > 0) {
                 miniTimer.style.display = 'none';
-                lastDismissedAlarmIdx = -1;
-                if (lastDismissedAlarmIdx !== nearestIdx) fullAlert.style.display = 'flex';
-                fullAlert.style.background = 'rgba(255, 138, 128, 0.95)'; 
-                alertMsg.innerText = isSpecial ? `🚀 ${subj} 특별실 이동 1분 전!` : `📝 ${subj} 수업 준비 1분 전!`;
-                alertTimer.innerText = diff > 60 ? 60 : diff;
-                mainAlarmMsg.innerText = `🔔 ${subj} 시작 ${diff}초 전!`; 
-                if (diff <= 30 && lastTickSecond !== now.getSeconds()) {
-                    playTickSound();
-                    lastTickSecond = now.getSeconds();
+                if (lastDismissedAlarmIdx !== nearestIdx) {
+                    fullAlert.style.display = 'flex';
+                    fullAlert.style.background = 'rgba(255, 138, 128, 0.95)'; 
+                    alertMsg.innerText = isSpecial ? `🚀 ${subj} 특별실 이동 1분 전!` : `📝 ${subj} 수업 준비 1분 전!`;
+                    alertTimer.innerText = diff > 60 ? 60 : diff;
+                    mainAlarmMsg.innerText = `🔔 ${subj} 시작 ${diff}초 전!`; 
+                    if (diff <= 30 && lastTickSecond !== now.getSeconds()) {
+                        playTickSound();
+                        lastTickSecond = now.getSeconds();
+                    }
                 }
             }
             else if (diff === 0) {
                 miniTimer.style.display = 'none';
                 fullAlert.style.display = 'none';
                 mainAlarmMsg.innerText = '';
-                lastDismissedAlarmIdx = -1;
                 if (lastDismissedAlarmIdx !== nearestIdx) {
                     document.getElementById('bigAlert').style.display = 'flex'; 
                     document.getElementById('bigAlertText').innerText = "수업 준비합시다!"; 

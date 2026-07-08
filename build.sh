@@ -2,10 +2,12 @@
 # 로컬 배포 전 API 키 주입 스크립트
 
 # 0. 환경 확인: Wrangler CLI 설치 여부 체크
-if ! command -v wrangler &> /dev/null && ! npx wrangler --version &> /dev/null; then
-    echo "❌ Wrangler CLI를 찾을 수 없습니다."
-    echo "💡 해결을 위해 다음 명령어를 실행하여 전역 설치를 진행해 주세요:"
-    echo "   npm install -g wrangler"
+if ! command -v wrangler &> /dev/null; then
+    if ! npx wrangler --version &> /dev/null; then
+        echo "❌ Wrangler CLI를 찾을 수 없습니다."
+        echo "💡 해결을 위해 다음 명령어를 실행하여 전역 설치를 진행해 주세요:"
+        echo "   npm install -g wrangler"
+    fi
 fi
 
 echo "🚀 배포를 위해 js/config.js의 API 키를 치환합니다..."

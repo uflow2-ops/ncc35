@@ -1,0 +1,21 @@
+{
+  "name": "같이 성장하는 우리 3학년 5반",
+  "short_name": "3-5반 대시보드",
+  "description": "3학년 5반 학급 관리 대시보드 - 시간표, 급식, 날씨, 생태도감",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fff9c4",
+  "theme_color": "#ffd8a8",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "lang": "ko",
+  "dir": "ltr"
+}

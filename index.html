@@ -250,15 +250,17 @@
             <div style="display:grid; grid-template-columns: 7fr 3fr; gap:20px; max-width:1600px; margin:0 auto; height:100%;">
                 <!-- 학생별 쿠키 획득 추이 (왼쪽, 70%) -->
                 <div class="card" style="background:white; padding:20px; display:flex; flex-direction:column;">
-                    <h3 style="margin-top:0; color:#6a1b9a; flex-shrink:0;">🍪 학생별 쿠키 획득 추이 (최근 7일)</h3>
+                    <h3 style="margin-top:0; color:#6a1b9a; flex-shrink:0;">🍪 학생별 쿠키 획득 추이 (최근 5일)</h3>
                     <div style="flex:1; display:flex; align-items:center; justify-content:center; min-height:0;">
                         <canvas id="cookieTrendChart" width="700" height="400" style="max-width:100%; max-height:100%;"></canvas>
                     </div>
-                    <div style="margin-top:15px; padding-top:15px; border-top:2px dashed #ddd; flex-shrink:0;">
-                        <h4 style="margin:0 0 10px 0; color:#6a1b9a; font-size:1.1rem;">👥 학생별 그래프 보기</h4>
-                        <div id="studentFilterList" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
-                        <button id="showAllStudentsBtn" class="side-btn" onclick="showAllStudents()" style="margin-top:10px; padding:6px 12px; font-size:0.9rem; background:#9c27b0; color:white; box-shadow: 0 2px 0 #6a1b9a;">전체 보기</button>
-                    </div>
+                </div>
+                
+                <!-- 학생별 그래프 보기 (그래프 아래) -->
+                <div class="card" style="background:white; padding:20px; flex-shrink:0;">
+                    <h4 style="margin:0 0 15px 0; color:#6a1b9a; font-size:1.1rem; text-align:center;">👥 학생별 그래프 보기</h4>
+                    <div id="studentFilterList" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:15px;"></div>
+                    <button id="showAllStudentsBtn" class="side-btn" onclick="showAllStudents()" style="display:block; margin:0 auto; padding:8px 20px; font-size:1rem; background:#9c27b0; color:white; box-shadow: 0 2px 0 #6a1b9a;">🔄 전체 보기</button>
                 </div>
                 
                 <!-- 반 전체 통계 (오른쪽, 30%) -->
