@@ -45,6 +45,7 @@ let viewDate = new Date();
         let currentAlarmIdx = -1;
         let weatherWarningMsg = "";
         let notepadContent = localStorage.getItem('notepad_v1') || "";
+        let selectedStudentCode = null;
 
         let noiseStream = null, noiseAnalyser = null, noiseDataArray = null;
         let noiseStrikes = 0;
@@ -1351,6 +1352,7 @@ card.innerHTML = `
         function renderDataAnalysis() {
             renderCookieTrendChart();
             renderClassStats();
+            renderStudentFilterList();
             
             const canvas = document.getElementById('cookieTrendChart');
             if (canvas && !canvas.hasClickHandler) {
@@ -1358,6 +1360,32 @@ card.innerHTML = `
                 canvas.addEventListener('click', handleChartClick);
                 canvas.style.cursor = 'pointer';
             }
+        }
+        
+        function renderStudentFilterList() {
+            const container = document.getElementById('studentFilterList');
+            if (!container) return;
+            
+            container.innerHTML = studentData.map(s => {
+                const isSelected = selectedStudentCode === s.code;
+                return `<button onclick="selectStudent('${s.code}')" style="padding:5px 10px; font-size:0.9rem; background:${isSelected ? '#9c27b0' : '#f5f5f5'}; color:${isSelected ? 'white' : '#333'}; border:2px solid ${isSelected ? '#6a1b9a' : '#ddd'}; border-radius:8px; cursor:pointer; font-family:'Jua';">${s.name}</button>`;
+            }).join('');
+        }
+        
+        function selectStudent(code) {
+            if (selectedStudentCode === code) {
+                selectedStudentCode = null;
+            } else {
+                selectedStudentCode = code;
+            }
+            renderCookieTrendChart();
+            renderStudentFilterList();
+        }
+        
+        function showAllStudents() {
+            selectedStudentCode = null;
+            renderCookieTrendChart();
+            renderStudentFilterList();
         }
         
         function renderCookieTrendChart() {
@@ -1403,12 +1431,20 @@ card.innerHTML = `
             const barSpacing = chartWidth / days.length;
             
             // 학생별 최대값 계산 (꺾은선그래프용)
-            const studentMaxVal = Math.max(
-                ...Object.values(dailyStudentData).flatMap(dayData => 
-                    Object.values(dayData).filter(v => v > 0)
-                ),
-                1
-            );
+            let studentMaxVal = 1;
+            if (selectedStudentCode) {
+                const selectedStudentData = dailyStudentData.map(dayData => dayData[selectedStudentCode] || 0).filter(v => v > 0);
+                if (selectedStudentData.length > 0) {
+                    studentMaxVal = Math.max(...selectedStudentData);
+                }
+            } else {
+                studentMaxVal = Math.max(
+                    ...Object.values(dailyStudentData).flatMap(dayData => 
+                        Object.values(dayData).filter(v => v > 0)
+                    ),
+                    1
+                );
+            }
             
             // 배경 그리드
             ctx.strokeStyle = '#e0e0e0';
@@ -1484,6 +1520,9 @@ card.innerHTML = `
             
             // 학생별 꺾은선 그리기
             Object.keys(studentTrends).forEach((code, index) => {
+                // 선택된 학생이 있고, 현재 코드가 선택된 학생이 아니면 건너뛰기
+                if (selectedStudentCode && code !== selectedStudentCode) return;
+                
                 if (!studentColors[code]) {
                     studentColors[code] = colorPalette[index % colorPalette.length];
                 }

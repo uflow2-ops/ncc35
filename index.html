@@ -260,6 +260,11 @@
                 <div class="card" style="background:white; padding:20px; display:flex; flex-direction:column;">
                     <h3 style="margin-top:0; color:#6a1b9a; flex-shrink:0;">📈 반 전체 쿠키 통계</h3>
                     <div id="classStats" style="font-size:1.2rem; text-align:left; padding:10px; overflow-y:auto; flex:1;"></div>
+                    <div style="margin-top:15px; padding-top:15px; border-top:2px dashed #ddd;">
+                        <h4 style="margin:0 0 10px 0; color:#6a1b9a; font-size:1.1rem;">👥 학생별 그래프 보기</h4>
+                        <div id="studentFilterList" style="display:grid; grid-template-columns:repeat(2,1fr); gap:5px; max-height:200px; overflow-y:auto;"></div>
+                        <button id="showAllStudentsBtn" class="side-btn" onclick="showAllStudents()" style="margin-top:10px; padding:6px 12px; font-size:0.9rem; background:#9c27b0; color:white; box-shadow: 0 2px 0 #6a1b9a;">전체 보기</button>
+                    </div>
                 </div>
             </div>
         </div>
