@@ -1871,6 +1871,7 @@ function importStudentData(event) {
             const saved = getTodayRoulette();
             if (saved) {
                 alert('🎰 오늘의 뽑기 결과\n\n' + escapeHtml(saved.title) + '\n\n📢 알림:\n' + escapeHtml(saved.alert));
+                closeRouletteModal();
             } else {
                 alert('아직 오늘의 뽑기가 진행되지 않았습니다.\n대시보드에서 뽑기를 실행해주세요!');
             }
