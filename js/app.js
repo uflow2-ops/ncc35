@@ -57,7 +57,6 @@ let viewDate = new Date();
 
         let lunchAutoOpened = false;
         let lunchResultShown = false;
-        let rouletteAutoOpened = false;
         const STORAGE_KEY = '3_5_science_garden_v2';
         const SUPER_CHANCE_KEY = 'superChanceBonus_v1';
         const SUPER_CHANCE_RESET_KEY = 'superChanceReset_v1';
@@ -470,23 +469,6 @@ let viewDate = new Date();
                 closeRoutineBanner();
             }
 
-            if (!rouletteAutoOpened && !getTodayRoulette() && classTimes.length > 0) {
-                const firstClassTime = classTimes[0];
-                const [firstH, firstM] = firstClassTime.split(':').map(Number);
-                const firstClassMin = firstH * 60 + firstM;
-                const currentMin = now.getHours() * 60 + now.getMinutes();
-                const currentSec = now.getSeconds();
-                
-                if (currentMin === firstClassMin - 1 && currentSec === 0) {
-                    rouletteAutoOpened = true;
-                    openRouletteModal();
-                    setTimeout(() => {
-                        if (!isWheelSpinning && !getTodayRoulette()) {
-                            spinRouletteWheel();
-                        }
-                    }, 500);
-                }
-            }
         }
 
     function setupNoiseElements() {
