@@ -317,6 +317,9 @@ let viewDate = new Date();
             let earners = [];
             const prevTotals = JSON.parse(localStorage.getItem('prev_api_totals') || '{}');
             const today = toLocalDateStr(new Date());
+
+            // API 요청 사이에 대기 시간을 만들어주는 로직 (초당 요청 제한 우회용)
+            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
             
             for (const s of studentData) {
                 try {
@@ -327,9 +330,9 @@ let viewDate = new Date();
                     const data = await res.json();
                     console.log('API 응답:', s.name, data);
                     
-                    if (data && data.result) {
-                        // totalCookie가 있으면 사용, 없으면 cookie 사용
-                        const current = data.data.totalCookie !== undefined ? data.data.totalCookie : data.data.cookie;
+                    if (data && data.result && data.data) {
+                        // 💡 다했니 API 설명서 기준: 전체 누적 쿠키 개수는 "cookie" 필드입니다!
+                        const current = data.data.cookie !== undefined ? data.data.cookie : 0;
                         const previous = prevTotals[s.code] || 0;
                         const dailyGain = current - previous;
                         
@@ -350,10 +353,21 @@ let viewDate = new Date();
                         prevTotals[s.code] = current;
                         currentAPI_Totals[s.code] = current;
                         grandTotal += current;
+                    } else if (data && data.message === "slow down.") {
+                        // 💡 다했니 서버로부터 차단 응답을 받았을 때의 방어 로직
+                        console.warn(`⚠️ ${s.name} 학생 조회 중 API 제한(slow down) 발생! 이전 데이터로 복원합니다.`);
+                        currentAPI_Totals[s.code] = prevTotals[s.code] || 0;
+                        grandTotal += currentAPI_Totals[s.code];
                     }
                 } catch (e) {
                     console.error('학생 쿠키 조회 실패:', s.name, e);
+                    // 에러가 나더라도 대시보드가 멈추지 않고 이전 값을 유지하게 만듭니다.
+                    currentAPI_Totals[s.code] = prevTotals[s.code] || 0;
+                    grandTotal += currentAPI_Totals[s.code];
                 }
+
+                // 💡 [핵심] 한 명 조회할 때마다 0.25초씩 쉬어줍니다 (Rate Limit 우회)
+                await sleep(250); 
             }
             
             localStorage.setItem('prev_api_totals', JSON.stringify(prevTotals));
@@ -392,7 +406,7 @@ let viewDate = new Date();
             renderBugGrid();
             renderGarden();
         }
-
+        
         function exportAllData() { 
             let exportObj = {};
             for (let i = 0; i < localStorage.length; i++) {
