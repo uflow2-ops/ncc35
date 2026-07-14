@@ -319,7 +319,7 @@ let viewDate = new Date();
                 try {
                     const res = await (await fetch(`https://api.dahandin.com/openapi/v1/get/student/total?code=${s.code}`, { headers: {"X-API-Key": DAHANDIN_API_KEY} })).json();
                     if(res.result) { 
-                        const current = res.data.totalCookie;
+                        const current = res.data.cookie;
                         const previous = prevTotals[s.code] || 0;
                         const dailyGain = current - previous;
                         
