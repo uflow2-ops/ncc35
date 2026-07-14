@@ -1236,17 +1236,19 @@ card.innerHTML = `
         }
         function toggleDahand(show) { const l = document.getElementById('dahandLayer'); if(show){ l.classList.add('show'); document.getElementById('dahandFrame').src="https://dahandin.com/"; } else l.classList.remove('show'); }
         function toggleGarden(show) { 
-            const l = document.getElementById('gardenLayer'); 
-            const panel = document.getElementById('gardenStatusPanel');
-            if(show) { 
-                l.classList.add('show'); 
-                panel.classList.add('show');
-                renderGarden();
-            } else { 
-                l.classList.remove('show'); 
-                panel.classList.remove('show');
-            }
-        }
+    const l = document.getElementById('gardenLayer'); 
+    const panel = document.getElementById('gardenStatusPanel');
+    if(show) { 
+        l.classList.add('show'); 
+        panel.classList.add('show');
+        panel.style.display = 'block'; // 💡 정원을 열었을 때만 요소를 화면에 표시!
+        renderGarden();
+    } else { 
+        l.classList.remove('show'); 
+        panel.classList.remove('show');
+        panel.style.display = 'none';  // 💡 정원을 닫으면 다시 완전히 숨김!
+    }
+}
 
         function openTTConfigModal() {
             let h = '<tr><th>교시</th>' + ["월","화","수","목","금"].map(d=>`<th>${d}</th>`).join('') + '</tr>';
