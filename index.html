@@ -287,13 +287,9 @@
 <button class="side-btn" onclick="closeAllModals()">취소</button>
 </div></div>
 
-<script src="js/config.js"></script>
-    <script src="js/data.js"></script>
-    <script src="js/app.js"></script>
-    <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() { navigator.serviceWorker.register('sw.js').catch(function(){}); });
-    }
-    </script>
+<!-- 뒤에 ?v=1.1 을 붙여 브라우저 캐시를 강제로 무효화시킵니다 -->
+<script src="js/config.js?v=1.1"></script>
+<script src="js/data.js?v=1.1"></script>
+<script src="js/app.js?v=1.1"></script>
 </body>
 </html>
