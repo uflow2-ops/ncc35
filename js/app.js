@@ -312,23 +312,34 @@ let viewDate = new Date();
         }
 
         async function syncCookies() {
-            let grandTotal = 0; let earners = []; const prevTotals = JSON.parse(localStorage.getItem('prev_api_totals') || '{}');
+            console.log('syncCookies 시작, 학생 수:', studentData.length);
+            let grandTotal = 0;
+            let earners = [];
+            const prevTotals = JSON.parse(localStorage.getItem('prev_api_totals') || '{}');
             const today = toLocalDateStr(new Date());
             
-            await Promise.all(studentData.map(async (s) => {
+            for (const s of studentData) {
                 try {
-                    const res = await (await fetch(`https://api.dahandin.com/openapi/v1/get/student/total?code=${s.code}`, { headers: {"X-API-Key": DAHANDIN_API_KEY} })).json();
-                    if(res.result) { 
-                        const current = res.data.cookie;
+                    console.log('학생 코드 조회:', s.code, s.name);
+                    const res = await fetch(`https://api.dahandin.com/openapi/v1/get/student/total?code=${s.code}`, {
+                        headers: {"X-API-Key": DAHANDIN_API_KEY}
+                    });
+                    const data = await res.json();
+                    console.log('API 응답:', s.name, data);
+                    
+                    if (data && data.result) {
+                        // totalCookie가 있으면 사용, 없으면 cookie 사용
+                        const current = data.data.totalCookie !== undefined ? data.data.totalCookie : data.data.cookie;
                         const previous = prevTotals[s.code] || 0;
                         const dailyGain = current - previous;
                         
-                        if(dailyGain > 0) { 
-                            if(!isFirstSync) earners.push(s.name); 
+                        console.log('쿠키 수:', s.name, '현재:', current, '이전:', previous, '증가:', dailyGain);
+                        
+                        if (dailyGain > 0) {
+                            if (!isFirstSync) earners.push(s.name);
                             cookieEarnDates[s.code] = Date.now();
                             localStorage.setItem('cookieEarnDates_v1', JSON.stringify(cookieEarnDates));
                             
-                            // 일일 획득량 기록
                             if (!dailyCookieHistory[today]) dailyCookieHistory[today] = {};
                             dailyCookieHistory[today][s.code] = (dailyCookieHistory[today][s.code] || 0) + dailyGain;
                             localStorage.setItem('dailyCookieHistory_v1', JSON.stringify(dailyCookieHistory));
@@ -336,25 +347,33 @@ let viewDate = new Date();
                             cookieEarnDates[s.code] = Date.now();
                             localStorage.setItem('cookieEarnDates_v1', JSON.stringify(cookieEarnDates));
                         }
-                        prevTotals[s.code] = current; 
-                        currentAPI_Totals[s.code] = current; 
-                        grandTotal += current; 
+                        prevTotals[s.code] = current;
+                        currentAPI_Totals[s.code] = current;
+                        grandTotal += current;
                     }
-                } catch(e) {}
-            }));
-            localStorage.setItem('prev_api_totals', JSON.stringify(prevTotals)); isFirstSync = false;
+                } catch (e) {
+                    console.error('학생 쿠키 조회 실패:', s.name, e);
+                }
+            }
+            
+            localStorage.setItem('prev_api_totals', JSON.stringify(prevTotals));
+            isFirstSync = false;
+            
             if (earners.length > 0) {
                 showMarqueeMessage('🎉 축하합니다! ' + earners.join(', ') + ' 학생이 쿠키를 획득했습니다! 🎉', 60000);
             }
             
+            console.log('총 쿠키 수:', grandTotal);
+            
             const pct = Math.min(100, Math.floor((grandTotal / cookieGoal) * 100));
-            document.getElementById('pct-text').innerText = pct + '%'; document.getElementById('current-total').innerText = grandTotal;
+            document.getElementById('pct-text').innerText = pct + '%';
+            document.getElementById('current-total').innerText = grandTotal;
             const pile = document.getElementById('cookie-pile');
-            pile.style.height = pct + '%'; 
+            pile.style.height = pct + '%';
             
             let cookiesHtml = '';
-            const cookieCount = Math.floor(pct / 1.5); 
-            for(let i=0; i<cookieCount; i++) {
+            const cookieCount = Math.floor(pct / 1.5);
+            for (let i = 0; i < cookieCount; i++) {
                 const rotateZ = (Math.random() * 360).toFixed(1);
                 const skew = (Math.random() * 20 - 10).toFixed(1);
                 const shiftX = (Math.random() * 20 - 10).toFixed(1);
@@ -363,13 +382,15 @@ let viewDate = new Date();
                 cookiesHtml += `<span style="display:inline-block; font-size:1.8rem; transform: rotateZ(${rotateZ}deg) scaleY(${perspectiveScale}) skew(${skew}deg) translateX(${shiftX}px); margin:-8px; filter: brightness(${brightness}) drop-shadow(2px 3px 2px rgba(0,0,0,0.4));">🍪</span>`;
             }
             pile.innerHTML = cookiesHtml;
+            
             const goalKey = 'goal_celebrated_' + toLocalDateStr(new Date());
             if (pct >= 100 && !localStorage.getItem(goalKey)) {
                 localStorage.setItem(goalKey, '1');
                 showGoalCelebration(grandTotal);
                 showMarqueeMessage('🏆 축하합니다! 우리 반 전체 쿠키 목표 ' + cookieGoal + '개를 달성했어요! 🏆', 120000);
             }
-            renderBugGrid(); renderGarden();
+            renderBugGrid();
+            renderGarden();
         }
 
         function exportAllData() { 
