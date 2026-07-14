@@ -32,5 +32,5 @@
     subjects: ["국어", "사회", "수학", "과학", "도덕", "체육", "음악", "미술", "실과", "영어", "창체", "-"],
     subIcons: { "국어":"📖", "사회":"🌍", "수학":"🔢", "과학":"🧪", "도덕":"🤝", "체육":"🏃", "음악":"🎵", "미술":"🎨", "실과":"🛠️", "영어":"🔤", "창체":"🌟", "-":"⚪" },
     defaultMarqueeMsg: "✨ 오늘도 빛나는 3학년 5반! 서로를 배려하며 즐겁게 공부합시다 ✨",
-    alarmSoundUrl: "https://t1.daumcdn.net/cfile/tistory/99412B355A70265C2D?original" 
+    alarmSoundUrl: "https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-915.mp3" 
 };
