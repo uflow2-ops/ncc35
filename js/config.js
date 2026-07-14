@@ -1,6 +1,6 @@
 ﻿﻿const CLASS_CONFIG = {
     neisApiKey: '선생님의_나이스_API_키',
-    dahandinApiKey: '8f0823e1243604bfc6a861a04217880d97aa13ddaea95bdd',
+    dahandinApiKey: '94d51472cbeb889a8d4e3888fbb735bcf062d0ceccc1af2c',
     weatherKey: '선생님의_기상청_API_키',
     
     school: {
