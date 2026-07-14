@@ -232,9 +232,9 @@ let viewDate = new Date();
             }
         }
         async function init() {
-            // 슈퍼찬스 관련 localStorage 데이터 초기화
-            localStorage.removeItem('superChanceBonus_v1');
-            localStorage.removeItem('superChanceReset_v1');
+            // 슈퍼찬스 관련 localStorage 데이터 초기화 (매번 초기화되지 않도록 주석 처리)
+            // localStorage.removeItem('superChanceBonus_v1');
+            // localStorage.removeItem('superChanceReset_v1');
             
             document.getElementById('alarmSound').src = alarmSoundUrl;
             applySoundVolume();
