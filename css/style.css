@@ -20,7 +20,6 @@ body {
     align-items: center; 
     color: var(--text-main); 
     background: var(--main-bg); 
-    transition: background 1.5s ease; 
 }
         
         .top-marquee { width: 100%; height: 50px; background: #222; color: #fff; display: flex; align-items: center; overflow: hidden; white-space: nowrap; border-bottom: 3px solid #000; z-index: 10; }

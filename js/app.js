@@ -57,6 +57,7 @@ let viewDate = new Date();
 
         let lunchAutoOpened = false;
         let lunchResultShown = false;
+        let rouletteAutoOpened = false;
         const STORAGE_KEY = '3_5_science_garden_v2';
         const SUPER_CHANCE_KEY = 'superChanceBonus_v1';
         const SUPER_CHANCE_RESET_KEY = 'superChanceReset_v1';
@@ -660,6 +661,26 @@ let viewDate = new Date();
 
         function refreshView() { renderAll(); fetchMeal(); fetchWeather(); closeAllModals(); }
 
+        function calculateWorkingDays(baseDate, targetDate) {
+            let workingDays = 0;
+            let cur = new Date(baseDate); cur.setHours(0,0,0,0);
+            let target = new Date(targetDate); target.setHours(0,0,0,0);
+            if (cur < target) {
+                let temp = new Date(cur);
+                while(temp < target) {
+                    if(temp.getDay() !== 0 && temp.getDay() !== 6) workingDays++;
+                    temp.setDate(temp.getDate() + 1);
+                }
+            } else if (cur > target) {
+                let temp = new Date(target);
+                while(temp < cur) {
+                    if(temp.getDay() !== 0 && temp.getDay() !== 6) workingDays--;
+                    temp.setDate(temp.getDate() + 1);
+                }
+            }
+            return workingDays;
+        }
+
         function renderAll() {
             const dk = viewDate.toLocaleDateString('sv-SE'), dNames = ["일","월","화","수","목","금","토"];
             const dayNum = viewDate.getDay();
@@ -673,7 +694,7 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
     const sName = typeof obj === 'string' ? obj : obj.s; 
     const isMove = typeof obj === 'object' && obj.m;
     const moveTag = isMove ? `<span style="font-size:1.1rem; background:#03a9f4; color:white; padding:2px 8px; border-radius:10px; margin-left:10px; white-space:nowrap;">이동</span>` : '';
-    
+
     return sName === "-" ? "" : (() => {
         let memoHtml = '';
         if (sName === "창체") {
@@ -696,10 +717,8 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
     })();
 }).join('');
 
-            let workingDays = 0; let cur = new Date(orderRef.baseDate); cur.setHours(0,0,0,0); let target = new Date(viewDate.toDateString()); target.setHours(0,0,0,0);
-            if (cur < target) { let temp = new Date(cur); while(temp < target) { if(temp.getDay() !== 0 && temp.getDay() !== 6) workingDays++; temp.setDate(temp.getDate() + 1); } } 
-            else if (cur > target) { let temp = new Date(target); while(temp < cur) { if(temp.getDay() !== 0 && temp.getDay() !== 6) workingDays--; temp.setDate(temp.getDate() + 1); } }
-
+            const targetDate = viewDate.toDateString();
+            const workingDays = calculateWorkingDays(orderRef.baseDate, targetDate);
             let todayStartIdx = 0;
             if (STUDENT_COUNT > 0) {
                 todayStartIdx = (orderRef.startIdx + workingDays) % STUDENT_COUNT;
@@ -712,15 +731,7 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
             
             document.getElementById('dynamic-content').innerHTML = orderList;
             
-            let milkWorkingDays = 0; 
-            let milkCur = new Date(milkOrderRef.baseDate); milkCur.setHours(0,0,0,0); 
-            if (milkCur < target) { 
-                let temp = new Date(milkCur); 
-                while(temp < target) { if(temp.getDay() !== 0 && temp.getDay() !== 6) milkWorkingDays++; temp.setDate(temp.getDate() + 1); } 
-            } else if (milkCur > target) { 
-                let temp = new Date(target); 
-                while(temp < milkCur) { if(temp.getDay() !== 0 && temp.getDay() !== 6) milkWorkingDays--; temp.setDate(temp.getDate() + 1); } 
-            }
+            const milkWorkingDays = calculateWorkingDays(milkOrderRef.baseDate, targetDate);
 
             const drinkers = studentData.filter(s => milkDrinkers.includes(s.code));
             if (drinkers.length > 0) {
@@ -766,7 +777,20 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
         function saveOrderConfig() { orderRef = { baseDate: new Date().toLocaleDateString('sv-SE'), startIdx: parseInt(document.getElementById('startStudentSelect').value) }; localStorage.setItem('order_v5', JSON.stringify(orderRef)); renderAll(); closeAllModals(); }
 
         const getMealIcon = (n) => {
-            if (n.includes("우유")) return "🥛"; if (n.includes("밥") || n.includes("죽")) return "🍚"; if (n.includes("볶음밥") || n.includes("덮밥")) return "🥘"; if (n.includes("국") || n.includes("찌개") || n.includes("탕")) return "🥣"; if (n.includes("돈가스") || n.includes("튀김") || n.includes("까스")) return "🍗"; if (n.includes("불고기") || n.includes("볶음") || n.includes("찜")) return "🍖"; if (n.includes("면") || n.includes("스파게티") || n.includes("파스타")) return "🍝"; if (n.includes("김치") || n.includes("깍두기") || n.includes("겉절이")) return "🌶️"; if (n.includes("샐러드") || n.includes("무침") || n.includes("나물")) return "🥗"; if (n.includes("떡볶이") || n.includes("떡")) return "🍢"; if (n.includes("빵") || n.includes("케이크") || n.includes("쿠키")) return "🧁"; if (n.includes("과일") || n.includes("사과") || n.includes("포도")) return "🍎"; if (n.includes("요구르트") || n.includes("쥬스") || n.includes("주스")) return "🧃"; return "🍴";
+            if (n.includes("우유")) return "🥛";
+            if (n.includes("밥") || n.includes("죽")) return "🍚";
+            if (n.includes("볶음밥") || n.includes("덮밥")) return "🥘";
+            if (n.includes("국") || n.includes("찌개") || n.includes("탕")) return "🥣";
+            if (n.includes("돈가스") || n.includes("튀김") || n.includes("까스")) return "🍗";
+            if (n.includes("불고기") || n.includes("볶음") || n.includes("찜")) return "🍖";
+            if (n.includes("면") || n.includes("스파게티") || n.includes("파스타")) return "🍝";
+            if (n.includes("김치") || n.includes("깍두기") || n.includes("겉절이")) return "🌶️";
+            if (n.includes("샐러드") || n.includes("무침") || n.includes("나물")) return "🥗";
+            if (n.includes("떡볶이") || n.includes("떡")) return "🍢";
+            if (n.includes("빵") || n.includes("케이크") || n.includes("쿠키")) return "🧁";
+            if (n.includes("과일") || n.includes("사과") || n.includes("포도")) return "🍎";
+            if (n.includes("요구르트") || n.includes("쥬스") || n.includes("주스")) return "🧃";
+            return "🍴";
         };
 
         async function fetchMeal() {
@@ -1840,7 +1864,24 @@ function importStudentData(event) {
         let isWheelSpinning = false;
 
         function setupRouletteUI() {
+            // 이미 버튼이 있으면 반환
             if (document.getElementById('eventRouletteBtn')) return;
+            
+            // checkTodayDrawBtn이 이미 HTML에 정의되어 있으면 사용
+            const existingBtn = document.getElementById('checkTodayDrawBtn');
+            if (existingBtn) {
+                existingBtn.id = 'eventRouletteBtn';
+                existingBtn.style.background = '#e91e63';
+                existingBtn.style.color = 'white';
+                existingBtn.style.boxShadow = '0 4px 0 #ad1457';
+                existingBtn.innerText = '🎰 오늘의 이벤트 뽑기';
+                existingBtn.onclick = openRouletteModal;
+                return;
+            }
+            
+            // 없으면 새로 생성
+            const lastSideBtn = document.querySelector('.side-btn:last-of-type');
+            if (!lastSideBtn) return;
             
             const rouletteBtn = document.createElement('button');
             rouletteBtn.className = 'side-btn';
@@ -1850,7 +1891,7 @@ function importStudentData(event) {
             rouletteBtn.style.boxShadow = '0 4px 0 #ad1457';
             rouletteBtn.innerText = '🎰 오늘의 이벤트 뽑기';
             rouletteBtn.onclick = openRouletteModal;
-            document.querySelector('.side-btn:last-of-type').after(rouletteBtn);
+            lastSideBtn.after(rouletteBtn);
             
             if (!document.getElementById('manualNoiseBtn')) {
                 const noiseBtn = document.createElement('button');
