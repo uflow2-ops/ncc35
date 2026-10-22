@@ -20,12 +20,13 @@ jobs:
       - name: Verify Files
         run: |
           echo "Checking if required files exist..."
-          ls -l js/config.js
+          ls -l js/config.template.js
           ls -l lunch.html
 
       - name: Inject API Keys
         run: |
-          echo "Injecting API Keys into config.js and lunch.html..."
+          echo "Generating config.js and injecting API Keys..."
+          cp js/config.template.js js/config.js
           sed -i "s|선생님의_나이스_API_키|${{ secrets.NEIS_API_KEY }}|g" js/config.js
           sed -i "s|선생님의_다했니_API_키|${{ secrets.DAHANDIN_API_KEY }}|g" js/config.js
           sed -i "s|선생님의_기상청_API_키|${{ secrets.WEATHER_KEY }}|g" js/config.js
