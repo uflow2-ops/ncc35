@@ -47,14 +47,6 @@ let viewDate = new Date();
         let notepadContent = localStorage.getItem('notepad_v1') || "";
         let selectedStudentCode = null;
 
-        let noiseStream = null, noiseAnalyser = null, noiseDataArray = null;
-        let noiseStrikes = 0;
-        let noiseHighStartTime = 0;
-        let isNoiseMonitoring = false;
-        let noiseThreshold = parseInt(localStorage.getItem('noiseThreshold_v1')) || 55;
-        let noiseGain = parseFloat(localStorage.getItem('noiseGain_v1')) || 1.0;
-        let noiseDuration = parseInt(localStorage.getItem('noiseDuration_v1')) || 3;
-
         let rouletteAutoOpened = false;
         const STORAGE_KEY = '3_5_science_garden_v2';
         const SUPER_CHANCE_KEY = 'superChanceBonus_v1';
@@ -96,12 +88,6 @@ let viewDate = new Date();
             soundSettings.celebration = document.getElementById('sound-celebration').checked;
             soundSettings.tick = document.getElementById('sound-tick').checked;
             localStorage.setItem('soundSettings_v1', JSON.stringify(soundSettings));
-            
-            const ntInput = document.getElementById('noise-threshold-input');
-            if (ntInput) {
-                noiseThreshold = parseInt(ntInput.value);
-                localStorage.setItem('noiseThreshold_v1', noiseThreshold);
-            }
             applySoundVolume();
         }
         function loadSoundSettingsUI() {
@@ -111,22 +97,6 @@ let viewDate = new Date();
             document.getElementById('sound-timer').checked = soundSettings.timer;
             document.getElementById('sound-celebration').checked = soundSettings.celebration;
             document.getElementById('sound-tick').checked = soundSettings.tick;
-
-            const settingsContainer = document.querySelector('.sound-settings');
-            if (settingsContainer && !document.getElementById('noise-threshold-input')) {
-                const html = `
-                    <div style="border-top: 1px dashed #ccc; margin-top: 10px; padding-top: 10px;">
-                        <label style="display:block; margin-bottom:5px;">🔇 소음 감지 민감도: <b id="noise-threshold-label">${noiseThreshold}</b></label>
-                        <input type="range" id="noise-threshold-input" min="30" max="85" value="${noiseThreshold}" 
-                               style="width:100%;" oninput="document.getElementById('noise-threshold-label').innerText = this.value">
-                        <small style="color: #666; font-size:0.9rem;">(값이 낮을수록 더 예민하게 감지합니다. 보통 50~60 권장)</small>
-                    </div>
-                `;
-                settingsContainer.insertAdjacentHTML('beforeend', html);
-            } else if (document.getElementById('noise-threshold-input')) {
-                document.getElementById('noise-threshold-input').value = noiseThreshold;
-                document.getElementById('noise-threshold-label').innerText = noiseThreshold;
-            }
         }
         function playAlarmSound(type) {
             if (type === 'bell' && !soundSettings.bell) return;
@@ -238,7 +208,6 @@ let viewDate = new Date();
             document.getElementById('alarmSound').src = alarmSoundUrl;
             applySoundVolume();
             setupRouletteUI();
-            setupNoiseElements();
             restoreRouletteState();
             await syncCookies();
             renderAll(); fetchWeather(); fetchMeal(); drawGardenBackground();
@@ -443,187 +412,41 @@ let viewDate = new Date();
             restoreRouletteState();
         }
     }
-        function checkRoutines(now) {
-            const curTimeNum = now.getHours() * 100 + now.getMinutes();
-            const isMorning = (curTimeNum >= 830 && curTimeNum < 900);
+    function checkRoutines(now) {
+        const curTimeNum = now.getHours() * 100 + now.getMinutes();
+        const isMorning = (curTimeNum >= 830 && curTimeNum < 900);
 
-            let isAnyBreak = isMorning;
-            classTimes.forEach(timeStr => {
-                const [h, m] = timeStr.split(':').map(Number);
-                const targetTimeNum = h * 100 + m;
-                let sh = h, sm = m - 10;
-                if (sm < 0) { sh--; sm += 60; }
-                const startTimeNum = sh * 100 + sm;
-                
-                if (timeStr === "13:00") {
-                    if (curTimeNum >= 1210 && curTimeNum < 1300) isAnyBreak = true;
-                } else if (curTimeNum >= startTimeNum && curTimeNum < targetTimeNum) {
-                    isAnyBreak = true;
-                }
-            });
-
-            if (isAnyBreak) {
-                if (!isNoiseMonitoring) startNoiseMonitoring();
-            } else {
-                const manualBtn = document.getElementById('manualNoiseBtn');
-                if (isNoiseMonitoring && (!manualBtn || !manualBtn.innerText.includes('중지'))) {
-                    stopNoiseMonitoring();
-                }
+        if (isMorning) {
+            if (!routineDismissed.morning && !document.getElementById('routineBanner').classList.contains('show')) {
+                showRoutineBanner("🌅 아침 활동 안내", routineMsgs.morning, 'morning');
             }
-
-            if (isMorning) { 
-                if (!routineDismissed.morning && !document.getElementById('routineBanner').classList.contains('show')) {
-                    showRoutineBanner("🌅 아침 활동 안내", routineMsgs.morning, 'morning');
-                } 
-            } else if (curTimeNum >= 900 && curTimeNum < 905 && currentActiveRoutineType === 'morning') {
-                closeRoutineBanner();
-            }
-
-            if (!readingJournalAlarmFired) {
-                const dName = ["일","월","화","수","목","금","토"][viewDate.getDay()];
-                const todayTT = temporaryTT[viewDate.toLocaleDateString('sv-SE')] || weeklyTT[dName];
-                const isFirstPeriodMove = todayTT && todayTT[0] && todayTT[0].m;
-                const journalStartTime = (isFirstPeriodMove && !alarmOffFlags[0]) ? 850 : 855;
-                const journalEndTime = (isFirstPeriodMove && !alarmOffFlags[0]) ? 855 : 900;
-                if (curTimeNum >= journalStartTime && curTimeNum < journalEndTime) {
-                    readingJournalAlarmFired = true;
-                    fireAlertOverlay("📚 독서통장 쓰기 시간입니다!");
-                    playAlarmSound('timer');
-                }
-            }
-
-            const isBreak1 = (curTimeNum >= 940 && curTimeNum < 950);
-            if (isBreak1) { 
-                if (!routineDismissed.break1 && !document.getElementById('routineBanner').classList.contains('show')) {
-                    showRoutineBanner("🥛 1교시 쉬는시간", routineMsgs.break1, 'break1');
-                }
-            } else if (curTimeNum >= 950 && curTimeNum < 955 && currentActiveRoutineType === 'break1') {
-                closeRoutineBanner();
-            }
-
-        }
-
-    function setupNoiseElements() {
-        const widget = `
-            <div id="noise-widget" class="noise-widget">
-                <div id="noise-strikes" class="noise-strike-dots">
-                    <div class="strike-dot"></div>
-                    <div class="strike-dot"></div>
-                    <div class="strike-dot"></div>
-                </div>
-                <div class="noise-level-meter">
-                    <div class="noise-level-cell"></div>
-                    <div class="noise-level-cell"></div>
-                    <div class="noise-level-cell"></div>
-                    <div class="noise-level-cell"></div>
-                    <div class="noise-level-cell"></div>
-                </div>
-                <div id="noise-value" style="font-size:1.4rem; font-weight:bold; color:#555;">0</div>
-            </div>`;
-        const warning = `<div id="noise-warning" class="noise-warning-indicator">⚠️ 너무 시끄러워요!</div>`;
-        document.body.insertAdjacentHTML('beforeend', widget + warning);
-    }
-
-        async function startNoiseMonitoring() {
-            if (isNoiseMonitoring) return;
-            try {
-                if (audioCtx.state === 'suspended') await audioCtx.resume();
-                noiseStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const source = audioCtx.createMediaStreamSource(noiseStream);
-                noiseAnalyser = audioCtx.createAnalyser();
-                noiseAnalyser.fftSize = 256;
-                noiseAnalyser.smoothingTimeConstant = 0.9;
-                source.connect(noiseAnalyser);
-                noiseDataArray = new Uint8Array(noiseAnalyser.frequencyBinCount);
-                isNoiseMonitoring = true;
-                noiseStrikes = 0;
-                document.getElementById('noise-widget').style.display = 'flex';
-                updateNoiseStrikesUI();
-                updateNoiseMonitoring();
-            } catch (err) { console.error("마이크 권한 필요:", err); }
-        }
-
-        function stopNoiseMonitoring() {
-            isNoiseMonitoring = false;
-            if (noiseStream) { noiseStream.getTracks().forEach(t => t.stop()); noiseStream = null; }
-            document.getElementById('noise-widget').style.display = 'none';
-            document.getElementById('noise-warning').classList.remove('show');
-        }
-
-        function toggleManualNoiseMonitoring() {
-            const btn = document.getElementById('manualNoiseBtn');
-            if (!isNoiseMonitoring) {
-                startNoiseMonitoring();
-                if (btn) {
-                    btn.innerText = '🔊 소음 측정 중지';
-                    btn.style.background = '#f44336';
-                }
-            } else {
-                stopNoiseMonitoring();
-                if (btn) {
-                    btn.innerText = '🔇 소음 측정 시작';
-                    btn.style.background = '#607d8b';
-                }
-            }
-        }
-
-        function updateNoiseMonitoring() {
-            if (!isNoiseMonitoring) return;
-            noiseAnalyser.getByteFrequencyData(noiseDataArray);
-            let avg = noiseDataArray.reduce((a, b) => a + b) / noiseDataArray.length;
-
-            const level = Math.min(5, Math.floor((avg / noiseThreshold) * 5));
-            const cells = document.querySelectorAll('.noise-level-cell');
-            cells.forEach((cell, i) => {
-                cell.classList.remove('active', 'warning', 'danger');
-                if (i < level) {
-                    cell.classList.add('active');
-                    if (level >= 5) cell.classList.add('danger');
-                    else if (level >= 3) cell.classList.add('warning');
-                }
-            });
-
-            const noiseValueEl = document.getElementById('noise-value');
-            if (noiseValueEl) noiseValueEl.innerText = Math.round(avg);
-
-            if (avg > noiseThreshold) {
-                if (!noiseHighStartTime) noiseHighStartTime = Date.now();
-                if (Date.now() - noiseHighStartTime > 3000) {
-                    noiseStrikes++;
-                    noiseHighStartTime = 0;
-                    updateNoiseStrikesUI();
-                    triggerNoiseWarningEffect();
-                    if (noiseStrikes >= 3) return forceEndBreakByNoise();
-                }
-            } else { noiseHighStartTime = 0; }
-            requestAnimationFrame(updateNoiseMonitoring);
-        }
-
-        function updateNoiseStrikesUI() {
-            const dots = document.querySelectorAll('.strike-dot');
-            dots.forEach((dot, i) => {
-                if (i < noiseStrikes) dot.classList.add('active');
-                else dot.classList.remove('active');
-            });
-        }
-
-        function triggerNoiseWarningEffect() {
-            const warn = document.getElementById('noise-warning');
-            warn.classList.add('show');
-            playAlarmSound('tick');
-            setTimeout(() => { warn.classList.remove('show'); }, 2500);
-        }
-
-        function forceEndBreakByNoise() {
-            stopNoiseMonitoring();
+        } else if (curTimeNum >= 900 && curTimeNum < 905 && currentActiveRoutineType === 'morning') {
             closeRoutineBanner();
-            fireAlertOverlay("🚫 소음 기준 초과! 즉시 정숙하세요. 쉬는 시간을 종료합니다.");
-            const l = document.getElementById('homeLayer');
-            const t = document.getElementById('homeTimer'), mission = document.getElementById('homeMission'), stopS = document.getElementById('stopSign');
-            l.classList.add('show');
-            t.style.display = 'none'; mission.style.display = 'none'; stopS.style.display = 'block';
-            playAlarmSound('bell');
         }
+
+        if (!readingJournalAlarmFired) {
+            const dName = ["일","월","화","수","목","금","토"][viewDate.getDay()];
+            const todayTT = temporaryTT[viewDate.toLocaleDateString('sv-SE')] || weeklyTT[dName];
+            const isFirstPeriodMove = todayTT && todayTT[0] && todayTT[0].m;
+            const journalStartTime = (isFirstPeriodMove && !alarmOffFlags[0]) ? 850 : 855;
+            const journalEndTime = (isFirstPeriodMove && !alarmOffFlags[0]) ? 855 : 900;
+            if (curTimeNum >= journalStartTime && curTimeNum < journalEndTime) {
+                readingJournalAlarmFired = true;
+                fireAlertOverlay("📚 독서통장 쓰기 시간입니다!");
+                playAlarmSound('timer');
+            }
+        }
+
+        const isBreak1 = (curTimeNum >= 940 && curTimeNum < 950);
+        if (isBreak1) {
+            if (!routineDismissed.break1 && !document.getElementById('routineBanner').classList.contains('show')) {
+                showRoutineBanner("🥛 1교시 쉬는시간", routineMsgs.break1, 'break1');
+            }
+        } else if (curTimeNum >= 950 && curTimeNum < 955 && currentActiveRoutineType === 'break1') {
+            closeRoutineBanner();
+        }
+
+    }
 
         function escapeHtml(text) {
             const div = document.createElement('div');
@@ -1888,18 +1711,6 @@ function importStudentData(event) {
             rouletteBtn.innerText = '🎰 오늘의 이벤트 뽑기';
             rouletteBtn.onclick = openRouletteModal;
             lastSideBtn.after(rouletteBtn);
-            
-            if (!document.getElementById('manualNoiseBtn')) {
-                const noiseBtn = document.createElement('button');
-                noiseBtn.className = 'side-btn';
-                noiseBtn.id = 'manualNoiseBtn';
-                noiseBtn.style.background = '#607d8b';
-                noiseBtn.style.color = 'white';
-                noiseBtn.style.marginTop = '5px';
-                noiseBtn.innerText = '🔇 소음 측정 시작';
-                noiseBtn.onclick = toggleManualNoiseMonitoring;
-                rouletteBtn.after(noiseBtn);
-            }
             if (!document.getElementById('rouletteOverlay')) {
                 document.body.insertAdjacentHTML('beforeend', `
                 <div class="roulette-overlay" id="rouletteOverlay">

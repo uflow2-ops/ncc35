@@ -1,74 +1,33 @@
-:root { 
-    --main-bg: #fff9c4; 
-    --card-bg: #fffef2; 
-    --point-color: #ffd8a8; 
-    --text-main: #5d4037; 
-    --border-color: #ffe0b2; 
-    --milk-blue: #e3f2fd; 
-    --alert-red: #ff8a80; 
-    --dahand-mint: #b2dfdb; 
+:root {
+    --main-bg: #fff9c4;
+    --card-bg: #fffef2;
+    --point-color: #ffd8a8;
+    --text-main: #5d4037;
+    --border-color: #ffe0b2;
+    --milk-blue: #e3f2fd;
+    --alert-red: #ff8a80;
+    --dahand-mint: #b2dfdb;
 }
 * { box-sizing: border-box; }
-body { 
-    font-family: 'Jua', sans-serif; 
-    margin: 0; 
-    padding: 0; 
-    overflow: hidden; 
-    height: 100vh; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    color: var(--text-main); 
-    background: var(--main-bg); 
+body {
+    font-family: 'Jua', sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--text-main);
+    background: var(--main-bg);
 }
-        
+
+/* Header and page layout */
         .top-marquee { width: 100%; height: 50px; background: #222; color: #fff; display: flex; align-items: center; overflow: hidden; white-space: nowrap; border-bottom: 3px solid #000; z-index: 10; }
         .marquee-content { display: inline-block; animation: marquee 30s linear infinite; font-size: 1.8rem; padding-left: 100%; }
         .neon-text { text-shadow: 0 0 5px #ffb300, 0 0 10px #ffb300, 0 0 20px #ff9800, 0 0 40px #ff9800; font-weight: bold; color: #fffde7; }
         @keyframes marquee { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } }
 
-        /* 🎤 컴팩트 소음 측정 위젯 스타일 */
-        .noise-widget { 
-            position: fixed; bottom: 30px; left: 30px; 
-            width: auto; height: auto; 
-            background: white; border-radius: 20px; 
-            border: 4px solid var(--border-color); 
-            display: none; flex-direction: column; align-items: center; padding: 12px 18px; gap: 10px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1); 
-            z-index: 9000; 
-        }
-        .noise-warning-indicator { 
-            position: fixed; 
-            top: -120px; /* 평소에는 화면 위로 숨김 */
-            left: 50%; 
-            transform: translateX(-50%); 
-            z-index: 9500; 
-            background: #f44336; 
-            color: white; 
-            padding: 15px 40px; 
-            border-radius: 0 0 30px 30px; 
-            font-size: 2.2rem; 
-            box-shadow: 0 8px 30px rgba(0,0,0,0.3); 
-            transition: top 0.7s cubic-bezier(0.23, 1, 0.32, 1); 
-            white-space: nowrap; 
-            pointer-events: none;
-        }
-        .noise-warning-indicator.show { top: 50px; animation: pulse 1s infinite; }
-        .noise-strike-dots { display: flex; gap: 10px; }
-        .strike-dot { width: 22px; height: 22px; background: #eee; border-radius: 50%; border: 2px solid #ccc; transition: 0.3s; }
-        .strike-dot.active { background: #f44336; border-color: #b71c1c; box-shadow: 0 0 10px #f44336; }
-
-        .noise-level-meter { display: flex; gap: 4px; align-items: flex-end; height: 30px; }
-        .noise-level-cell { width: 10px; border-radius: 2px; background: #eee; transition: height 0.2s, background 0.3s; }
-        .noise-level-cell:nth-child(1) { height: 20%; }
-        .noise-level-cell:nth-child(2) { height: 40%; }
-        .noise-level-cell:nth-child(3) { height: 60%; }
-        .noise-level-cell:nth-child(4) { height: 80%; }
-        .noise-level-cell:nth-child(5) { height: 100%; }
-        .noise-level-cell.active { background: #4caf50; }
-        .noise-level-cell.active.warning { background: #ffeb3b; }
-        .noise-level-cell.active.danger { background: #f44336; }
-        
         .top-banner { position: fixed; top: -100%; left: 50%; transform: translateX(-50%); width: 70%; max-width: 800px; background: white; border: 6px solid var(--point-color); border-top: none; border-radius: 0 0 35px 35px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); z-index: 8000; transition: top 0.8s cubic-bezier(0.25, 1, 0.5, 1); padding: 25px; text-align: center; }
         .top-banner.show { top: 45px; }
         .routine-content { font-size: 2.2rem; line-height: 1.6; text-align: left; display: inline-block; margin-top: 20px; }
@@ -80,6 +39,7 @@ body {
         #meal-list {display: block;  width: 100%;  white-space: nowrap;    overflow: hidden;   text-overflow: ellipsis; }
         #weather-info { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
 
+/* Alerts and classroom controls */
         .big-alert-overlay { display: none; position: fixed; inset: 0; background: rgba(255, 0, 0, 0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: white; text-align: center; pointer-events: none; }
         .big-alert-overlay .dismiss-btn { position: absolute; top: 30px; right: 40px; background: none; border: none; color: white; font-size: 7rem; cursor: pointer; pointer-events: auto; }
         .big-alert-overlay #bigAlertText { pointer-events: none; }
@@ -101,6 +61,7 @@ body {
         .stop-sign { display: none; font-size: 10rem; color: white; background: #d32f2f; padding: 20px 60px; border-radius: 30px; border: 10px solid white; box-shadow: 0 0 50px rgba(0,0,0,0.5); text-align: center; line-height: 1.2; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
+/* Cookies and garden */
         .cookie-jar { 
             width: 150px; height: 220px; 
             background: linear-gradient(to right, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.5) 25%, rgba(255,255,255,0.2) 65%, rgba(255,255,255,0.1) 100%);
@@ -204,7 +165,7 @@ body {
         .garden-status-summary { margin-top:12px; text-align:left; color:#4e342e; line-height:1.5; font-size:1rem; }
         .flower-spot:hover { transform: scale(1.1); }
         
-/* 1. 부르르 떠는 것 대신, 우아하고 천천히 숨 쉬는 효과 (3초 주기) */
+/* Garden motion and status effects */
 @keyframes gentleFloat {
     0%, 100% { margin-top: 0; }
     50% { margin-top: -6px; }
@@ -276,7 +237,7 @@ body {
     animation: gentleFloat 1.5s infinite; 
 }
 
-/* --- 추가 스타일 (룰렛, 창체, 축하, 사운드) --- */
+/* Memos, celebrations, and roulette */
 .memo-edit-btn { background: #4db6ac; color: white; border: none; border-radius: 12px; padding: 6px 14px; font-family: 'Jua'; cursor: pointer; font-size: 1.1rem; }
 .creative-memo-chip {
     margin-left: 15px; font-size: 1.2rem; color: #00796b; background: #e0f2f1;
@@ -328,7 +289,7 @@ body {
 .sound-settings label { display: block; margin: 6px 0; cursor: pointer; }
 .sound-settings input[type=range] { width: 100%; margin: 8px 0; }
 
-/* 슈퍼 찬스용 숫자 플로팅 애니메이션 */
+/* Super-chance animations */
 @keyframes floatUpFade {
     0% { transform: translate(-50%, 0); opacity: 0; }
     20% { opacity: 1; }
