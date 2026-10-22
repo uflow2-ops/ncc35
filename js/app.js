@@ -55,8 +55,6 @@ let viewDate = new Date();
         let noiseGain = parseFloat(localStorage.getItem('noiseGain_v1')) || 1.0;
         let noiseDuration = parseInt(localStorage.getItem('noiseDuration_v1')) || 3;
 
-        let lunchAutoOpened = false;
-        let lunchResultShown = false;
         let rouletteAutoOpened = false;
         const STORAGE_KEY = '3_5_science_garden_v2';
         const SUPER_CHANCE_KEY = 'superChanceBonus_v1';
@@ -247,7 +245,7 @@ let viewDate = new Date();
             setInterval(function() {
                 const now = new Date();
                 checkDateTransition(now);
-                updateMainClock(now); checkAlarms(now); checkCustomAlarm(now); checkRoutines(now); checkLunchEvent(now);
+                updateMainClock(now); checkAlarms(now); checkCustomAlarm(now); checkRoutines(now);
             }, 1000);
             setInterval(syncCookies, 60000);
             setInterval(fetchWeather, 600000);
@@ -436,8 +434,6 @@ let viewDate = new Date();
             lastCheckedDay = currentDay;
             routineDismissed = { morning: false, break1: false };
             readingJournalAlarmFired = false;
-            lunchAutoOpened = false;
-            lunchResultShown = false;
             rouletteAutoOpened = false;
             lastDismissedAlarmIdx = -1;
             viewDate = new Date(now);
@@ -839,10 +835,27 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
                     else if (sky === "3") { skyIcon = "⛅"; skyT = "구름많음"; } 
                     else if (sky === "4") { skyIcon = "☁️"; skyT = "흐림"; } 
                 }
-                let dustHtml = "";
-                try { const dRes = await fetch(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${WEATHER_KEY}&returnType=json&numOfRows=100&pageNo=1&sidoName=${encodeURIComponent(currentLoc.sido || '강원')}&ver=1.0`); const dData = await dRes.json(); const localDust = dData.response?.body?.items?.[0];
-
-                    const pmValue = localDust ? parseInt(localDust.pm10Value, 10) : NaN;
+                const renderDustStatus = (label, value, color) => `
+                    <div style="margin-top:10px; padding:6px 15px; border-radius:15px; background:white; border:2px solid ${color}; width:90%;">
+                        <div style="font-size:1.6rem; font-weight:bold; color:${color};">${label}</div>
+                        <div style="font-size:1.2rem; color:#555;">수치: ${value}</div>
+                    </div>`;
+                let dustHtml = renderDustStatus("불러오는 중", "확인 중", "#999");
+                let pmValue = NaN;
+                weatherWarningMsg = "";
+                try {
+                    const dRes = await fetch(`https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty?serviceKey=${WEATHER_KEY}&returnType=json&numOfRows=100&pageNo=1&sidoName=${encodeURIComponent(currentLoc.sido || '강원')}&ver=1.0`);
+                    if (!dRes.ok) throw new Error(`HTTP ${dRes.status}`);
+                    const dData = await dRes.json();
+                    const resultCode = dData.response?.header?.resultCode;
+                    if (resultCode && resultCode !== "00") {
+                        throw new Error(`API result ${resultCode}: ${dData.response.header.resultMsg || "unknown error"}`);
+                    }
+                    const dustItems = dData.response?.body?.items;
+                    const localDust = Array.isArray(dustItems)
+                        ? dustItems.find(item => Number.isFinite(parseInt(item.pm10Value, 10))) || dustItems[0]
+                        : dustItems;
+                    pmValue = localDust ? parseInt(localDust.pm10Value, 10) : NaN;
                     const tVal = parseFloat(temp);
                     let bgColor = "#fff9c4"; 
                     weatherWarningMsg = ""; 
@@ -871,21 +884,21 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
                     const marquee = document.getElementById('top-msg');
                     if (!marqueeRestoreTimer) marquee.innerText = getActiveMarqueeText();
 
-                    if (localDust) {
-                        let gradeText = "--", gradeColor = "#999";
-                        if (isNaN(pmValue)) { gradeText = "측정중"; gradeColor = "#999"; }
-                        else if (pmValue <= 30) { gradeText = "😆 좋음"; gradeColor = "#2196f3"; }
+                    if (!localDust) {
+                        dustHtml = renderDustStatus("자료 없음", "측정소 자료 없음", "#999");
+                    } else if (isNaN(pmValue)) {
+                        dustHtml = renderDustStatus("측정중", "측정중", "#999");
+                    } else {
+                        let gradeText = "🚨 매우나쁨", gradeColor = "#f44336";
+                        if (pmValue <= 30) { gradeText = "😆 좋음"; gradeColor = "#2196f3"; }
                         else if (pmValue <= 80) { gradeText = "🙂 보통"; gradeColor = "#4caf50"; }
                         else if (pmValue <= 150) { gradeText = "😷 나쁨"; gradeColor = "#ff9800"; }
-                        else { gradeText = "🚨 매우나쁨"; gradeColor = "#f44336"; }
-
-                        dustHtml = `
-                            <div style="margin-top:10px; padding:6px 15px; border-radius:15px; background:white; border:2px solid ${gradeColor}; width:90%;">
-                                <div style="font-size:1.6rem; font-weight:bold; color:${gradeColor};">${gradeText}</div>
-                                <div style="font-size:1.2rem; color:#555;">수치: ${isNaN(pmValue) ? '측정중' : pmValue + '㎍/㎥'}</div>
-                            </div>`;
+                        dustHtml = renderDustStatus(gradeText, `${pmValue}㎍/㎥`, gradeColor);
                     }
-                } catch(e) {}
+                } catch(e) {
+                    console.error("미세먼지 데이터 로드 실패:", e);
+                    dustHtml = renderDustStatus("정보 연결 실패", "다시 불러오는 중", "#999");
+                }
                 info.innerHTML = `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%;"><div style="display:flex; align-items:center; gap:10px; line-height:1;"><span style="font-size:5rem;">${skyIcon}</span><b style="font-size:4.2rem; letter-spacing:-2px;">${temp}°C</b></div><div style="font-size:1.6rem; color:#555; font-weight:bold; margin-top:2px;">${skyT}</div>${dustHtml}</div>`;
             } catch(e) { info.innerHTML = "날씨 연결 실패"; }
         }
@@ -1377,11 +1390,6 @@ card.innerHTML = `
             });
         }
 
-        function toggleLunchLayer(show) {
-            const l = document.getElementById('lunchLayer'); const f = document.getElementById('lunchFrame');
-            if(show) { l.classList.add('show'); f.src = `lunch.html?date=${toLocalDateStr(viewDate)}`; } 
-            else { l.classList.remove('show'); }
-        }
         function toggleDataAnalysis(show) {
             const l = document.getElementById('dataAnalysisLayer');
             if(show) { 
@@ -1797,18 +1805,6 @@ card.innerHTML = `
                     </div>
                 </div>
             `;
-        }
-
-        function checkLunchEvent(now) {
-            const curTimeNum = now.getHours() * 100 + now.getMinutes(); 
-            if (curTimeNum === 1250 && !lunchAutoOpened) { toggleLunchLayer(true); lunchAutoOpened = true; }
-            if (curTimeNum >= 1258 && curTimeNum < 1300 && !lunchResultShown) {
-                const frame = document.getElementById('lunchFrame');
-                if (frame.contentWindow && typeof frame.contentWindow.toggleStats === 'function') {
-                    frame.contentWindow.toggleStats(); lunchResultShown = true; playAlarmSound('celebration'); 
-                }
-            }
-            if (curTimeNum === 0) { lunchAutoOpened = false; lunchResultShown = false; }
         }
 
         function editCreativeMemo(idx) {

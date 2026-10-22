@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>오늘의 뽑기 확인</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Jua', sans-serif;
@@ -14,6 +15,27 @@
             align-items: center;
             margin: 0;
             padding: 20px;
+        }
+        .side-btn {
+            width: 100%;
+            border: none;
+            padding: 12px;
+            border-radius: 15px;
+            font-family: 'Jua';
+            cursor: pointer;
+            font-size: 22px;
+            margin-top: 8px;
+            transition: 0.2s;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+        }
+        .side-btn:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+        .side-btn:disabled {
+            background: #9e9e9e;
+            box-shadow: 0 4px 0 #757575;
+            cursor: not-allowed;
         }
         .container {
             background: white;
@@ -67,10 +89,11 @@
     </style>
 </head>
 <body>
-    <div class="container">
+<div class="container">
         <h1>🎰 오늘의 뽑기 확인</h1>
         <div class="date-info" id="dateInfo"></div>
         <div id="resultArea"></div>
+        <button class="side-btn" onclick="startRoulette()" style="background:#e91e63; color:white; margin-top:20px; font-size:1.5rem; padding:15px 30px;">🎯 게임 시작하기</button>
     </div>
 
     <script>
@@ -88,9 +111,12 @@
             return null;
         }
 
+        function saveTodayRoulette(data) {
+            localStorage.setItem('roulette_daily_v1', JSON.stringify(Object.assign({ date: toLocalDateStr(new Date()) }, data)));
+        }
+
         function displayResult() {
             const today = new Date();
-            const dateStr = toLocalDateStr(today);
             const dateInfo = document.getElementById('dateInfo');
             const resultArea = document.getElementById('resultArea');
             
@@ -110,17 +136,52 @@
                         <div class="result-content">${result.alert}</div>
                     </div>
                 `;
+                document.querySelector('button[onclick="startRoulette()"]').style.display = 'none';
             } else {
                 resultArea.innerHTML = `
                     <div class="result-box">
                         <div class="no-result">
                             <div class="icon">😊</div>
                             아직 오늘의 뽑기가 진행되지 않았습니다.<br>
-                            대시보드에서 뽑기를 실행해주세요!
+                            게임 시작 버튼을 눌러 주세요!
                         </div>
                     </div>
                 `;
             }
+        }
+
+        // 룰렛 아이템 (index.html의 data.js와 동일)
+        const wheelItems = [
+            { label: "대박 2배", color: "#ff5722", title: "🔥 [오늘의 이벤트] 오늘은 대박 쿠키 데이! 모든 미션 성공 시 쿠키가 무조건 2배! 선생님이 다했니에서 2배로 쏩니다! 🔥", alert: "🎉 대박! 오늘은 하루 종일 [쿠키 2배 이벤트]가 진행됩니다!" },
+            { label: "🍀즐거운 날", color: "#4caf50", title: "✨ 오늘도 빛나는 3학년 5반! 서로를 배려하며 즐겁게 공부합시다 ✨", alert: "🍀 오늘은 차분하고 싱그러운 [새싹 데이]입니다. 우리 반 생태 정원을 성실하게 가꾸어 봅시다!" },
+            { label: "보너스 +1", color: "#ff9800", title: "✨ [오늘의 이벤트] 오늘은 보너스 쿠키 데이! 쿠키를 받을 때마다 선생님이 +1개 더 보너스로 쏩니다! ✨", alert: "🎁 오늘은 하루 종일 [쿠키 +1개 더 이벤트]가 진행됩니다!" },
+            { label: "🍀행복한 날", color: "#4caf50", title: "✨ 오늘도 빛나는 3학년 5반! 서로를 배려하며 즐겁게 공부합시다 ✨", alert: "🌱 오늘은 나만의 보석을 모으는 [꾸준함 데이]입니다. 평소처럼 성실하게 내 가치를 높여볼까요?" },
+            { label: "럭키 마니또", color: "#e91e63", title: "🤝 [오늘의 이벤트] 오늘은 럭키 마니또 데이! 내가 쿠키를 받으면, 우리 모둠 친구에게도 쿠키 1개 선물! 🤝", alert: "🤝 오늘은 하루 종일 [럭키 마니또 데이]입니다! 서로 응원하도록 독려해 주세요." },
+            { label: "🍀좋은 날", color: "#4caf50", title: "✨ 오늘도 빛나는 3학년 5반! 서로를 배려하며 즐겁게 공부합시다 ✨", alert: "🌈 오늘은 평화롭고 다정한 [기본 모드]입니다. 친구와 함께 웃으며 오늘도 파이팅!" },
+            { label: "전원 통과", color: "#9c27b0", title: "💪 [오늘의 이벤트] 전원 통과 도전 데이! 우리 반 전원이 오늘 쿠키를 받으면 모두에게 +1개씩 추가 보너스! 💪", alert: "💪 오늘은 [전원 통과 도전 데이]입니다! 친구들이 서로 돕도록 이끌어주세요." },
+            { label: "🍀기쁜 날", color: "#4caf50", title: "✨ 오늘도 빛나는 3학년 5반! 서로를 배려하며 즐겁게 공부합시다 ✨", alert: "🍀 오늘은 차분하고 싱그러운 [새싹 데이]입니다. 우리 반 생태 정원을 성실하게 가꾸어 봅시다!" },
+            { label: "얼리버드", color: "#2196f3", title: "⏰ [오늘의 이벤트] 오늘은 얼리버드 데이! 오전 10시 전까지 미션을 완료해 제출하면 쿠키 +1개 보너스! ⏰", alert: "⏰ 오늘은 [얼리버드 데이]입니다! 10시 전 제출자에게 보너스를 챙겨주세요." },
+            { label: "행운의 369", color: "#00bcd4", title: "🎰 [오늘의 이벤트] 오늘은 행운의 369 데이! 오늘 '순서' 카드에서 3, 6, 9, 13, 16, 19번인 친구는 쿠키가 2배! 🎰", alert: "🎰 오늘은 [행운의 369 데이]입니다! 해당 번호 친구들의 이름표가 황금빛으로 반짝입니다✨", isLucky369: true }
+        ];
+
+        function startRoulette() {
+            if (getTodayRoulette()) {
+                alert('이미 오늘의 뽑기가 완료되었습니다!');
+                return;
+            }
+            
+            const targetIndex = Math.floor(Math.random() * wheelItems.length);
+            const finalEvent = wheelItems[targetIndex];
+            
+            saveTodayRoulette({ 
+                index: targetIndex, 
+                title: finalEvent.title, 
+                alert: finalEvent.alert, 
+                isLucky369: !!finalEvent.isLucky369 
+            });
+            
+            alert('🎉 오늘의 이벤트!\n\n' + finalEvent.title + '\n\n📢 ' + finalEvent.alert);
+            displayResult();
         }
 
         displayResult();

@@ -92,7 +92,6 @@
             <button class="side-btn" onclick="toggleDahand(true)" style="background:var(--dahand-mint); box-shadow: 0 4px 0 #80cbc4;">다했니 🚀</button>
             <button class="side-btn" onclick="window.open('http://www.킹수학.com')" style="background:orange; color:white; box-shadow: 0 4px 0 #e65100;">👑 킹수학</button>
             <button class="side-btn" onclick="openRoutineConfig()" style="background:#cfd8dc; color:#37474f; box-shadow: 0 4px 0 #b0bec5;">⚙️ 기본 설정</button>
-            <button class="side-btn" onclick="toggleLunchLayer(true)" style="background:#42a5f5; color:white; box-shadow: 0 4px 0 #1e88e5;">🏆 급식 월드컵</button>
             <button class="side-btn" onclick="toggleDataAnalysis(true)" style="background:#9c27b0; color:white; box-shadow: 0 4px 0 #6a1b9a;">📊 데이터 분석</button>
         </div>
     </div>
@@ -214,13 +213,6 @@
         <button class="side-btn" onclick="closeAllModals()" style="background:#eee; margin-top:10px;">닫기</button>
     </div></div>
     <div id="dahandLayer" class="slide-layer" style="height:55%; border-top:8px solid var(--dahand-mint);"><div style="padding:12px 20px; background:var(--dahand-mint); color:white; display:flex; justify-content:space-between; align-items:center;" onclick="toggleDahand(false)"><span>🚀 다했니?</span><span>내려놓기 ✖</span></div><iframe id="dahandFrame" style="width:100%; flex:1; border:none;"></iframe></div>
-    <div id="lunchLayer" class="slide-layer" style="height:70%; border-top:8px solid #42a5f5; background:#e3f2fd;">
-        <div style="padding:12px 20px; background:#42a5f5; color:white; display:flex; justify-content:space-between; align-items:center;" onclick="toggleLunchLayer(false)">
-            <span>🏆 3-5반 급식 월드컵</span>
-            <span style="cursor:pointer;">닫기 ✖</span>
-        </div>
-        <iframe id="lunchFrame" style="width:100%; flex:1; border:none;"></iframe>
-    </div>
 
     <div id="notepadModal" class="modal">
         <div class="modal-box" style="max-width: 850px; width: 90%; border-color: #8d6e63;">
