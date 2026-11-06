@@ -25,6 +25,7 @@ jobs:
       - name: Inject API Keys
         env:
           NEIS_API_KEY: ${{ secrets.NEIS_API_KEY }}
+          DAHANDIN_API_KEY: ${{ secrets.DAHANDIN_API_KEY }}
           WEATHER_KEY: ${{ secrets.WEATHER_KEY }}
         run: |
           python - <<'PY'
@@ -35,6 +36,7 @@ jobs:
           config = Path("js/config.template.js").read_text(encoding="utf-8")
           secrets = {
               "NEIS_API_KEY": "선생님의_나이스_API_키",
+              "DAHANDIN_API_KEY": "선생님의_다했니_API_키",
               "WEATHER_KEY": "선생님의_기상청_API_키",
           }
 

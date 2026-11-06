@@ -1,4 +1,5 @@
 const NEIS_API_KEY = CLASS_CONFIG.neisApiKey;
+const DAHANDIN_API_KEY = CLASS_CONFIG.dahandinApiKey;
 const WEATHER_KEY = CLASS_CONFIG.weatherKey;
 
 CLASS_CONFIG.studentData = JSON.parse(localStorage.getItem('studentData_v1')) || CLASS_CONFIG.studentData;
@@ -281,7 +282,7 @@ let viewDate = new Date();
         async function syncCookies() {
             const syncStatus = document.getElementById('cookie-sync-status');
             if (studentData.length === 0) {
-                if (syncStatus) syncStatus.innerText = '설정에서 학생 JSON을 불러와 주세요.';
+                if (syncStatus) syncStatus.innerText = '설정에서 학생 CSV를 불러와 주세요.';
                 return;
             }
 
@@ -296,12 +297,9 @@ let viewDate = new Date();
             
             for (const s of studentData) {
                 try {
-                    if (typeof s.apiKey !== 'string' || !s.apiKey.trim()) {
-                        throw new Error('학생별 API 키가 없습니다. 학생 JSON을 다시 불러와 주세요.');
-                    }
                     console.log('학생 코드 조회:', s.code, s.name);
                     const res = await fetch(`https://api.dahandin.com/openapi/v1/get/student/total?code=${encodeURIComponent(s.code)}`, {
-                        headers: {"X-API-Key": s.apiKey.trim()}
+                        headers: {"X-API-Key": DAHANDIN_API_KEY}
                     });
                     const data = await res.json();
                     console.log('API 응답:', s.name, data);
@@ -1706,7 +1704,7 @@ function parseStudentCsv(text) {
 }
 
 function downloadStudentCsvTemplate() {
-    const csv = '\uFEFFname,code,apiKey\r\n';
+    const csv = '\uFEFFname,code\r\n';
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
     link.href = url;
@@ -1728,17 +1726,16 @@ function importStudentData(event) {
             if (rows.length < 2) throw new Error('CSV에 학생 데이터가 없습니다.');
 
             const headers = rows[0].map(value => value.trim().toLowerCase());
-            const columns = ['name', 'code', 'apikey'].map(header => headers.indexOf(header));
-            if (columns.some(index => index === -1)) {
-                throw new Error('첫 행에 name, code, apiKey 열이 모두 있어야 합니다.');
+            if (headers.length !== 2 || headers[0] !== 'name' || headers[1] !== 'code') {
+                throw new Error('첫 행은 name,code 두 열이어야 합니다.');
             }
 
             const students = rows.slice(1).map((values, index) => {
-                const [name, code, apiKey] = columns.map(column => (values[column] || '').trim());
-                if (!name || !code || !apiKey) {
-                    throw new Error(`${index + 2}행에 name, code, apiKey 값이 모두 필요합니다.`);
+                const [name, code] = values;
+                if (values.length !== 2 || !name.trim() || !code.trim()) {
+                    throw new Error(`${index + 2}행에 name, code 값이 모두 있어야 합니다.`);
                 }
-                return { name, code, apiKey };
+                return { name: name.trim(), code: code.trim() };
             });
 
             localStorage.setItem('studentData_v1', JSON.stringify(students));
