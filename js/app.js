@@ -1666,36 +1666,94 @@ card.innerHTML = `
             renderAll();
         }
 
+function parseStudentCsv(text) {
+    const rows = [];
+    let row = [];
+    let field = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (inQuotes) {
+            if (char === '"' && text[i + 1] === '"') {
+                field += '"';
+                i++;
+            } else if (char === '"') {
+                inQuotes = false;
+            } else {
+                field += char;
+            }
+        } else if (char === '"' && field.length === 0) {
+            inQuotes = true;
+        } else if (char === ',') {
+            row.push(field);
+            field = '';
+        } else if (char === '\n' || char === '\r') {
+            row.push(field);
+            if (row.some(value => value.trim())) rows.push(row);
+            row = [];
+            field = '';
+            if (char === '\r' && text[i + 1] === '\n') i++;
+        } else {
+            field += char;
+        }
+    }
+
+    if (inQuotes) throw new Error('CSV 따옴표가 닫히지 않았습니다.');
+    row.push(field);
+    if (row.some(value => value.trim())) rows.push(row);
+    return rows;
+}
+
+function downloadStudentCsvTemplate() {
+    const csv = '\uFEFFname,code,apiKey\r\n';
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = '학생데이터_양식.csv';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function importStudentData(event) {
     const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
-            const importedStudents = JSON.parse(e.target.result);
-            if (!Array.isArray(importedStudents) || !importedStudents.every(s =>
-                s &&
-                typeof s.name === 'string' && s.name.trim() &&
-                ((typeof s.code === 'string' && s.code.trim()) ||
-                    (typeof s.code === 'number' && Number.isFinite(s.code))) &&
-                typeof s.apiKey === 'string' && s.apiKey.trim()
-            )) {
-                alert("학생 데이터 파일 형식이 올바르지 않습니다. 각 항목에 'name', 'code', 'apiKey'가 필요합니다.");
-                return;
+            if (typeof e.target.result !== 'string') throw new Error('파일을 텍스트로 읽을 수 없습니다.');
+            const rows = parseStudentCsv(e.target.result.replace(/^\uFEFF/, ''));
+            if (rows.length < 2) throw new Error('CSV에 학생 데이터가 없습니다.');
+
+            const headers = rows[0].map(value => value.trim().toLowerCase());
+            const columns = ['name', 'code', 'apikey'].map(header => headers.indexOf(header));
+            if (columns.some(index => index === -1)) {
+                throw new Error('첫 행에 name, code, apiKey 열이 모두 있어야 합니다.');
             }
-            const students = importedStudents.map(s => ({
-                ...s,
-                name: s.name.trim(),
-                code: String(s.code).trim(),
-                apiKey: s.apiKey.trim()
-            }));
+
+            const students = rows.slice(1).map((values, index) => {
+                const [name, code, apiKey] = columns.map(column => (values[column] || '').trim());
+                if (!name || !code || !apiKey) {
+                    throw new Error(`${index + 2}행에 name, code, apiKey 값이 모두 필요합니다.`);
+                }
+                return { name, code, apiKey };
+            });
+
             localStorage.setItem('studentData_v1', JSON.stringify(students));
-            alert("학생 데이터가 성공적으로 불러와졌습니다! 페이지를 새로고침합니다.");
+            alert(`학생 데이터 ${students.length}명을 불러왔습니다. 페이지를 새로고침합니다.`);
             location.reload();
         } catch(err) {
-            alert("파일을 읽는 중 오류가 발생했습니다. JSON 형식이 올바른지 확인하세요.");
-            console.error("학생 데이터 불러오기 오류:", err);
+            alert(`학생 CSV를 불러오지 못했습니다: ${err.message}`);
+            console.error('학생 CSV 불러오기 오류:', err.message);
+        } finally {
+            event.target.value = '';
         }
+    };
+    reader.onerror = function() {
+        alert('학생 CSV 파일을 읽지 못했습니다.');
+        event.target.value = '';
     };
     reader.readAsText(file);
 }
