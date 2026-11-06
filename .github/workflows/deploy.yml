@@ -21,7 +21,6 @@ jobs:
         run: |
           echo "Checking if required files exist..."
           ls -l js/config.template.js
-          ls -l lunch.html
 
       - name: Inject API Keys
         run: |
@@ -30,7 +29,6 @@ jobs:
           sed -i "s|선생님의_나이스_API_키|${{ secrets.NEIS_API_KEY }}|g" js/config.js
           sed -i "s|선생님의_다했니_API_키|${{ secrets.DAHANDIN_API_KEY }}|g" js/config.js
           sed -i "s|선생님의_기상청_API_키|${{ secrets.WEATHER_KEY }}|g" js/config.js
-          sed -i "s|선생님의_나이스_API_키|${{ secrets.NEIS_API_KEY }}|g" lunch.html
 
       - name: Verify Injection (Dry Run)
         run: |
