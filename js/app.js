@@ -37,8 +37,8 @@ let viewDate = new Date();
         let milkOrderRef = JSON.parse(localStorage.getItem('milkOrder_v1')) || { baseDate: "2026-03-30", startIdx: 0 };
         let alarmOffFlags = JSON.parse(localStorage.getItem('alarmOffFlags_v1')) || Array(6).fill(false);
         let homeMissionText = localStorage.getItem('home_mission_v1') || "📍 책상 줄 맞추기\n📍 바닥 쓰레기 줍기\n📍 내일 배울 교과서 및 내 자리 정리";
-        let subjectMemo = JSON.parse(localStorage.getItem('creativeMemo_v1')) || {};
-        let subjectMemoEditIdx = null;
+        let creativeMemo = JSON.parse(localStorage.getItem('creativeMemo_v1')) || {};
+        let creativeMemoEditIdx = null;
         let soundSettings = JSON.parse(localStorage.getItem('soundSettings_v1')) || { volume: 0.7, bell: true, timer: true, celebration: true, tick: true };
         let marqueeRestoreTimer = null;
         let lastDismissedAlarmIdx = -1;
@@ -515,12 +515,15 @@ document.getElementById('display-tt').innerHTML = list.map((obj, i) => {
     const moveTag = isMove ? `<span style="font-size:1.1rem; background:#03a9f4; color:white; padding:2px 8px; border-radius:10px; margin-left:10px; white-space:nowrap;">이동</span>` : '';
 
     return sName === "-" ? "" : (() => {
-        const dateKey = viewDate.toLocaleDateString('sv-SE');
-        const memo = escapeHtml(subjectMemo[`${dateKey}-${i}`] || "메모 입력");
-        const memoHtml = `
-            <div class="subject-memo-chip" onclick="event.stopPropagation(); editSubjectMemo(${i})">
-                📝 ${memo}
-            </div>`;
+        let memoHtml = '';
+        if (sName === "창체") {
+            const dateKey = viewDate.toLocaleDateString('sv-SE');
+            const memo = escapeHtml(creativeMemo[`${dateKey}-${i}`] || "활동 내용 입력");
+            memoHtml = `
+                <div class="creative-memo-chip" onclick="event.stopPropagation(); editCreativeMemo(${i})">
+                    📝 ${memo}
+                </div>`;
+        }
         return `
             <div class="subject-item" style="display: flex; align-items: center; justify-content: center; padding: 8px 15px;" onclick="openQuickSubModal(${i})">
                 <div style="display: flex; align-items: center; flex-shrink: 0;">
@@ -1627,18 +1630,18 @@ card.innerHTML = `
             `;
         }
 
-        function editSubjectMemo(idx) {
-            subjectMemoEditIdx = idx;
+        function editCreativeMemo(idx) {
+            creativeMemoEditIdx = idx;
             const dateKey = viewDate.toLocaleDateString('sv-SE');
-            document.getElementById('subject-memo-input').value = subjectMemo[dateKey + '-' + idx] || '';
-            document.getElementById('subjectMemoModal').style.display = 'flex';
+            document.getElementById('creative-memo-input').value = creativeMemo[dateKey + '-' + idx] || '';
+            document.getElementById('creativeMemoModal').style.display = 'flex';
         }
-        function saveSubjectMemo() {
-            if (subjectMemoEditIdx === null) return;
+        function saveCreativeMemo() {
+            if (creativeMemoEditIdx === null) return;
             const dateKey = viewDate.toLocaleDateString('sv-SE');
-            subjectMemo[dateKey + '-' + subjectMemoEditIdx] = document.getElementById('subject-memo-input').value.trim();
-            localStorage.setItem('creativeMemo_v1', JSON.stringify(subjectMemo));
-            subjectMemoEditIdx = null;
+            creativeMemo[dateKey + '-' + creativeMemoEditIdx] = document.getElementById('creative-memo-input').value.trim();
+            localStorage.setItem('creativeMemo_v1', JSON.stringify(creativeMemo));
+            creativeMemoEditIdx = null;
             closeAllModals();
             renderAll();
         }
