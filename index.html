@@ -82,6 +82,7 @@
             <div id="pct-text" style="font-size: 42px; color: var(--alert-red); font-weight: 900;">0%</div>
             <div class="cookie-jar"><div id="cookie-pile" class="cookie-pile"></div></div>
             <div id="current-total" style="background:var(--alert-red); color:white; border-radius:50%; width:85px; height:85px; display:flex; align-items:center; justify-content:center; font-size:32px; margin-top:-30px; border:5px solid white; z-index:20;">0</div>
+            <div id="cookie-sync-status" role="status" style="font-size:0.85rem; text-align:center; overflow-wrap:anywhere; color:#666;"></div>
             
             <div class="card" style="width:100%; background:var(--milk-blue); padding:10px; border:none; margin-top:10px;">
                 <div style="font-size:20px;">🥛 우유 당번 <button onclick="openMilkConfig()" style="background:none; border:none; cursor:pointer; font-size:16px;" title="우유 당번 설정">⚙️</button></div>
@@ -165,7 +166,7 @@
 <label><input type="checkbox" id="sound-tick" checked> 카운트 틱 소리</label>
 </div>
 <h3 style="margin-bottom:5px; color:#1976d2; margin-top:15px;">💾 전체 데이터 백업 및 복구</h3>
-                <p style="font-size:1rem; color:#666; margin-top:0;">시간표, 발표 순서, 도감(곤충), 우유 당번 등이 한 번에 저장됩니다.</p>
+                <p style="font-size:1rem; color:#666; margin-top:0;">시간표, 학생 데이터(학생별 API 키 포함), 도감 등이 저장됩니다. 백업 파일을 공유하거나 공개 저장소에 올리지 마세요.</p>
                 <div style="display:flex; gap:10px;">
                     <button class="side-btn" onclick="exportAllData()" style="background:#4fc3f7; color:white; margin-top:0;">내보내기 (저장) 💾</button>
                     <button class="side-btn" onclick="document.getElementById('import-all-file').click()" style="background:#ffb74d; color:white; margin-top:0;">가져오기 (복구) 📂</button>
@@ -173,7 +174,7 @@
                 <input type="file" id="import-all-file" style="display:none" accept=".json" onchange="importAllData(event)">
 
                 <h3 style="margin-bottom:5px; color:#6a1b9a; margin-top:15px;">🧑‍🎓 학생 데이터 관리</h3>
-                <p style="font-size:1rem; color:#666; margin-top:0;">개인 정보 보호를 위해 학생 이름은 별도로 관리됩니다. 아래 버튼으로 불러오세요.</p>
+                <p style="font-size:1rem; color:#666; margin-top:0;">JSON 형식 예: [{"name":"학생 이름","code":"학생 코드","apiKey":"학생별 키"}]. 키는 이 브라우저에 저장되므로 JSON을 공개 저장소에 올리지 마세요.</p>
                 <div style="display:flex; gap:10px;">
                     <button class="side-btn" onclick="document.getElementById('import-student-file').click()" style="background:#4CAF50; color:white; margin-top:0;">학생 데이터 불러오기 📂</button>
                 </div>

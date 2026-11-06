@@ -1,5 +1,4 @@
 const NEIS_API_KEY = CLASS_CONFIG.neisApiKey;
-const DAHANDIN_API_KEY = CLASS_CONFIG.dahandinApiKey;
 const WEATHER_KEY = CLASS_CONFIG.weatherKey;
 
 CLASS_CONFIG.studentData = JSON.parse(localStorage.getItem('studentData_v1')) || CLASS_CONFIG.studentData;
@@ -280,27 +279,41 @@ let viewDate = new Date();
         }
 
         async function syncCookies() {
-            console.log('syncCookies 시작, 학생 수:', studentData.length);
+            const syncStatus = document.getElementById('cookie-sync-status');
+            if (studentData.length === 0) {
+                if (syncStatus) syncStatus.innerText = '설정에서 학생 JSON을 불러와 주세요.';
+                return;
+            }
+
             let grandTotal = 0;
             let earners = [];
+            let successCount = 0;
+            let firstError = '';
             const prevTotals = JSON.parse(localStorage.getItem('prev_api_totals') || '{}');
             const today = toLocalDateStr(new Date());
 
-            // API 요청 사이에 대기 시간을 만들어주는 로직 (초당 요청 제한 우회용)
             const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
             
             for (const s of studentData) {
                 try {
+                    if (typeof s.apiKey !== 'string' || !s.apiKey.trim()) {
+                        throw new Error('학생별 API 키가 없습니다. 학생 JSON을 다시 불러와 주세요.');
+                    }
                     console.log('학생 코드 조회:', s.code, s.name);
-                    const res = await fetch(`https://api.dahandin.com/openapi/v1/get/student/total?code=${s.code}`, {
-                        headers: {"X-API-Key": DAHANDIN_API_KEY}
+                    const res = await fetch(`https://api.dahandin.com/openapi/v1/get/student/total?code=${encodeURIComponent(s.code)}`, {
+                        headers: {"X-API-Key": s.apiKey.trim()}
                     });
                     const data = await res.json();
                     console.log('API 응답:', s.name, data);
-                    
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    if (!data || !data.result || !data.data || data.data.cookie === undefined) {
+                        throw new Error(data && typeof data.message === 'string' ? data.message : '쿠키 응답 형식이 올바르지 않습니다.');
+                    }
                     if (data && data.result && data.data) {
                         // 💡 다했니 API 설명서 기준: 전체 누적 쿠키 개수는 "cookie" 필드입니다!
-                        const current = data.data.cookie !== undefined ? data.data.cookie : 0;
+                        const current = Number(data.data.cookie);
+                        if (!Number.isFinite(current)) throw new Error('쿠키 값이 숫자가 아닙니다.');
+                        successCount++;
                         const previous = prevTotals[s.code] || 0;
                         const dailyGain = current - previous;
                         
@@ -328,7 +341,9 @@ let viewDate = new Date();
                         grandTotal += currentAPI_Totals[s.code];
                     }
                 } catch (e) {
-                    console.error('학생 쿠키 조회 실패:', s.name, e);
+                    const message = e instanceof Error ? e.message : String(e);
+                    console.error('학생 쿠키 조회 실패:', s.name, message);
+                    if (!firstError) firstError = `${s.name}: ${message}`;
                     // 에러가 나더라도 대시보드가 멈추지 않고 이전 값을 유지하게 만듭니다.
                     currentAPI_Totals[s.code] = prevTotals[s.code] || 0;
                     grandTotal += currentAPI_Totals[s.code];
@@ -345,7 +360,12 @@ let viewDate = new Date();
                 showMarqueeMessage('🎉 축하합니다! ' + earners.join(', ') + ' 학생이 쿠키를 획득했습니다! 🎉', 60000);
             }
             
-            console.log('총 쿠키 수:', grandTotal);
+            if (syncStatus) {
+                syncStatus.innerText = successCount === studentData.length
+                    ? `다했니 동기화 완료 (${successCount}명)`
+                    : `다했니 동기화 ${successCount}/${studentData.length}명 · ${firstError}`;
+                syncStatus.style.color = successCount === studentData.length ? '#388e3c' : '#c62828';
+            }
             
             const pct = Math.min(100, Math.floor((grandTotal / cookieGoal) * 100));
             document.getElementById('pct-text').innerText = pct + '%';
@@ -1653,11 +1673,23 @@ function importStudentData(event) {
     reader.onload = function(e) {
         try {
             const importedStudents = JSON.parse(e.target.result);
-            if (!Array.isArray(importedStudents) || !importedStudents.every(s => s.name && s.code)) {
-                alert("학생 데이터 파일 형식이 올바르지 않습니다. 각 항목은 'name'과 'code'를 포함해야 합니다.");
+            if (!Array.isArray(importedStudents) || !importedStudents.every(s =>
+                s &&
+                typeof s.name === 'string' && s.name.trim() &&
+                ((typeof s.code === 'string' && s.code.trim()) ||
+                    (typeof s.code === 'number' && Number.isFinite(s.code))) &&
+                typeof s.apiKey === 'string' && s.apiKey.trim()
+            )) {
+                alert("학생 데이터 파일 형식이 올바르지 않습니다. 각 항목에 'name', 'code', 'apiKey'가 필요합니다.");
                 return;
             }
-            localStorage.setItem('studentData_v1', JSON.stringify(importedStudents));
+            const students = importedStudents.map(s => ({
+                ...s,
+                name: s.name.trim(),
+                code: String(s.code).trim(),
+                apiKey: s.apiKey.trim()
+            }));
+            localStorage.setItem('studentData_v1', JSON.stringify(students));
             alert("학생 데이터가 성공적으로 불러와졌습니다! 페이지를 새로고침합니다.");
             location.reload();
         } catch(err) {
