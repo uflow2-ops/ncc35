@@ -23,22 +23,47 @@ jobs:
           ls -l js/config.template.js
 
       - name: Inject API Keys
+        env:
+          NEIS_API_KEY: ${{ secrets.NEIS_API_KEY }}
+          DAHANDIN_API_KEY: ${{ secrets.DAHANDIN_API_KEY }}
+          WEATHER_KEY: ${{ secrets.WEATHER_KEY }}
         run: |
-          echo "Generating config.js and injecting API Keys..."
-          cp js/config.template.js js/config.js
-          sed -i "s|선생님의_나이스_API_키|${{ secrets.NEIS_API_KEY }}|g" js/config.js
-          sed -i "s|선생님의_다했니_API_키|${{ secrets.DAHANDIN_API_KEY }}|g" js/config.js
-          sed -i "s|선생님의_기상청_API_키|${{ secrets.WEATHER_KEY }}|g" js/config.js
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          config = Path("js/config.template.js").read_text(encoding="utf-8")
+          secrets = {
+              "NEIS_API_KEY": "선생님의_나이스_API_키",
+              "DAHANDIN_API_KEY": "선생님의_다했니_API_키",
+              "WEATHER_KEY": "선생님의_기상청_API_키",
+          }
+
+          for name, placeholder in secrets.items():
+              value = os.environ.get(name, "")
+              if not value.strip():
+                  raise SystemExit(f"Required GitHub Actions secret is empty: {name}")
+              quoted_placeholder = f"'{placeholder}'"
+              if quoted_placeholder not in config:
+                  raise SystemExit(f"Configuration placeholder not found for {name}")
+              config = config.replace(quoted_placeholder, json.dumps(value))
+
+          if "선생님의_" in config:
+              raise SystemExit("Unreplaced API key placeholder remains in config.js")
+
+          Path("js/config.js").write_text(config, encoding="utf-8")
+          print("API key configuration generated successfully.")
+          PY
 
       - name: Verify Injection (Dry Run)
         run: |
-          echo "Verifying if placeholders were replaced..."
-          # 플레이스홀더가 여전히 남아있는지 확인 (남아있다면 치환 실패로 간주 가능)
+          test -s js/config.js
           if grep -q "선생님의_" js/config.js; then
-            echo "⚠️ Warning: Some placeholders still exist in config.js"
-          else
-            echo "✅ Injection looks successful."
+            echo "Unreplaced API key placeholder remains in config.js" >&2
+            exit 1
           fi
+          echo "API key configuration verified."
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
